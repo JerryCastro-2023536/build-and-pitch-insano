@@ -7,43 +7,36 @@
 
 ## 🚀 Guía Rápida para la Demo en Vivo (< 4 minutos)
 
-La aplicación cuenta con una **barra superior de control de demo (DemoControlBar)** y accesos directos de 1 clic diseñados específicamente para presentaciones ante jurados de hackathon:
+La aplicación cuenta con una **barra superior de control de demo (DemoControlBar)** diseñada específicamente para presentaciones ante jurados de hackathon:
 
 1. **⏱️ Cronómetro de Pitch (4:00 min):** En la esquina superior derecha dispones de un cronómetro en vivo para medir los 4 minutos de tu presentación.
-2. **⚡ Botón "Pitch 1-Click" / "Cargar Escenario Pitch (Camila Morales)":** Precarga instantáneamente el caso estrella:
-   - **Estudiante:** Camila Morales (14 años, 3ero Básico, Guatemala).
-   - **Problema:** Ecuación cuadrática $2(x + 3)^2 - 8 = 24$.
-   - **Fallo:** En el Paso 3 comete el error típico $2(x+3)^2 \to (2x+6)^2$ (distribuir factor sobre base con exponente).
-   - **Base Débil Aislada:** Jerarquía de Operaciones (PEMDAS).
-3. **🔄 Botón "Reset Demo":** Limpia `localStorage` y regresa la plataforma al estado inicial en 1 segundo.
+2. **🌱 Inicio Limpio (App Nueva):** La aplicación inicia en estado cero (sin estudiantes precargados ni datos mock). Cada interacción genera datos reales que persisten en `localStorage`.
+3. **🔄 Botón "Reset Demo":** Limpia las claves `balam_` de `localStorage` y regresa la plataforma al estado inicial en 1 segundo.
 
-### 🎬 Flujo de 5 Pasos del Pitch (< 4 minutos):
+### 🎬 Flujo del Pitch en Vivo (< 4 minutos):
 1. **Paso 1: Registro Inicial (`Pantalla 1`):** Ingreso del alumno, edad (13 a 15 años) y selección de tema MVP (Jerarquía, Potencias, Ecuación Cuadrática).
-2. **Paso 2: Resolución en Whiteboard (`Pantalla 2`):** Lienzo digital interactivo (trazo/escritura) y editor de transformaciones matemáticas paso a paso. Puedes presionar *"Simular Error Típico"* y luego *"Analizar Dónde se Rompió el Razonamiento"*.
-3. **Paso 3: Diagnóstico de Causa Raíz (`Pantalla 3`):** El sistema marca con un recuadro rojo el Paso 3 exacto en el lienzo y resalta que la brecha no es álgebra avanzada sino la base de **Jerarquía de Operaciones**.
-4. **Paso 4: Remediación Focalizada & Reintento (`Pantallas 4 y 5`):** Ruta de solo 3 micro-ejercicios focalizados. Al resolverlos, se verifica de inmediato la regla de oro y se muestra la pantalla de **Base Reparada (`Pantalla 8`)**.
-5. **Paso 5: Resumen para Tutor / Docente / Familia (`Pantalla 7`):** Vista de acompañamiento escolar que resume en lenguaje claro:
-   - *En qué falló* (Multiplicación antes de potencia).
-   - *Qué practicó* (3 micro-ejercicios focalizados en vez de 50 planas repetitivas).
-   - *Cómo evoluciona* (Dominio subió de 42 % a 94 %).
-   - Consejos accionables para la familia en casa.
+2. **Paso 2: Resolución en Whiteboard (`Pantalla 3`):** Lienzo digital interactivo (trazo/escritura) y editor de transformaciones matemáticas paso a paso. Se introduce la ecuación y los pasos para presionar *"Analizar Dónde se Rompió el Razonamiento"*.
+3. **Paso 3: Diagnóstico de Causa Raíz (`Pantalla 4`):** El sistema resalta el paso exacto en el lienzo donde ocurrió la ruptura y determina que la brecha es la base de **Jerarquía de Operaciones**.
+4. **Paso 4: Ruta de Práctica & Apoyo Interactivo (`Pantallas 5 y 6`):** Ruta de micro-ejercicios focalizados y acordeón pedagógico con micro-práctica. Al completarlos, se avanza a **Base Reparada (`Pantalla 9`)**.
+5. **Paso 5: Resumen para Tutor / Docente / Familia (`Pantallas 7 y 8`):** Vista de progreso del estudiante y espacio de acompañamiento escolar que resume en lenguaje claro el avance y el apoyo familiar en el hogar.
 
 ---
 
-## 📱 Mapeo de Pantallas Stitch
+## 📱 Mapeo de Pantallas
 
-Esta implementación integra fielmente la estructura y diseño de las 8 pantallas generadas en el proyecto Stitch (**ID: 16894582551067296788**):
+Esta implementación integra fielmente el sistema de diseño Textiles & Math con 9 pantallas completas:
 
-| # | Nombre de Pantalla | Stitch Screen ID | Componente en `src/screens/` |
-|---|-------------------|------------------|------------------------------|
-| 1 | **Registro Inicial - Balam** | `d6f04a15bb124422afdf59ea03e68f8b` | `Screen1Registration.tsx` |
-| 2 | **Pizarra de Trabajo - Resolver Problema** | `cf0147a592034e049c2ff56aaff8873c` | `Screen2Whiteboard.tsx` |
-| 3 | **Diagnóstico - Dónde se Rompió el Razonamiento** | `597cc88da3ca4d0d98adfcb5a9e6c28a` | `Screen3Diagnostic.tsx` |
-| 4 | **Mi Ruta de Práctica Personalizada** | `3c22f79a510841adac38188a693ae796` | `Screen4RemediationPath.tsx` |
-| 5 | **Ejercicio de Refuerzo con Feedback Visual** | `ce1717e9a0524e4882cf78627698614c` | `Screen5Reinforcement.tsx` |
-| 6 | **Mi Progreso - Camila Morales** | `5dab68cc9b274d0faae85e00de28dda7` | `Screen6StudentProgress.tsx` |
-| 7 | **Vista Docente y Familia - Balam** | `062134e26e594017af0b3fc58ea67cfa` | `Screen7TeacherParentView.tsx` |
-| 8 | **Base Reparada - Éxito de Aprendizaje** | `65ae8aa19d17468396ed9d4445a477f7` | `Screen8SuccessRepaired.tsx` |
+| # | Nombre de Pantalla | Componente en `src/screens/` |
+|---|-------------------|------------------------------|
+| 1 | **Registro Inicial - Balam** | `Screen1Registration.tsx` |
+| 2 | **Mi Camino (Hub Interactivo)** | `Screen2HomePath.tsx` |
+| 3 | **Pizarra de Trabajo - Resolver Problema** | `Screen3Whiteboard.tsx` |
+| 4 | **Feedback Visual - Dónde se Rompió el Razonamiento** | `Screen4ProcessFeedback.tsx` |
+| 5 | **Mi Ruta de Práctica Personalizada (5 Nudos)** | `Screen5RemediationRoute.tsx` |
+| 6 | **Material de Apoyo Interactivo y Micro-Práctica** | `Screen6InteractiveSupport.tsx` |
+| 7 | **Mi Progreso Estudiante (Métricas y Racha)** | `Screen7StudentProgress.tsx` |
+| 8 | **Vista Docente y Familia (Acompañamiento y PIN)** | `Screen8TeacherParentView.tsx` |
+| 9 | **Base Reparada - Éxito de Aprendizaje** | `Screen9SuccessRepaired.tsx` |
 
 ---
 
@@ -54,30 +47,33 @@ Construido en **TypeScript (Strict Mode)** con arquitectura limpia por capas des
 ```
 src/
 ├── domain/                          # Capa de Dominio Pedagógico
-│   ├── types.ts                     # Modelos de datos estrictos (StudentProfile, MathStep, DiagnosticResult, etc.)
-│   └── curriculum.ts                # Casos precargados y temas MVP (Jerarquía, Potencias, Cuadrática)
+│   ├── types.ts                     # Modelos de datos estrictos (StudentProfile, MathStep, UserProgressMetrics, etc.)
+│   ├── flowStateMachine.ts          # Máquina de estados finita y navegación
+│   └── curriculum.ts                # Temas MVP y problemas pedagógicos (Jerarquía, Potencias, Cuadrática)
 ├── persistence/                     # Capa de Persistencia Adaptable (localStorage)
-│   ├── storageKeys.ts               # Constantes de almacenamiento con prefijo balam_
-│   ├── localStorageAdapter.ts       # Adaptador genérico tipado
-│   └── balamRepository.ts           # Repositorio (getProfile, saveSession, resetDemo, loadPitchScenario)
+│   ├── storageKeys.ts               # Constantes de almacenamiento con prefijo balam_ y versión
+│   ├── localStorageAdapter.ts       # Adaptador genérico tipado con recuperación de corrupción
+│   └── balamRepository.ts           # Repositorio (getProfile, saveSession, resetDemo, getUserMetrics)
 ├── services/                        # Capa de Agente y Lógica Pedagógica
 │   ├── PedagogicalAnalyzerService.ts# Interfaz estricta de análisis de proceso
 │   ├── offlineEvaluator.ts          # Motor determinista offline (latencia <15ms, sin fallas de red)
 │   └── geminiEvaluator.ts           # Adaptador con IA generativa (fallback automático al motor offline)
 ├── components/                      # Componentes UI Modulares
 │   ├── layout/
-│   │   ├── Navbar.tsx               # Barra de marca, tabs de las 8 pantallas Stitch y perfil
-│   │   └── DemoControlBar.tsx       # Barra de pitch con flujo 1-5, cronómetro y botón 1-click
+│   │   ├── Navbar.tsx               # Barra superior con racha, puntos y tabs
+│   │   ├── DemoControlBar.tsx       # Barra de pitch con flujo 1-5, cronómetro y Reset Demo
+│   │   └── BottomNavigation.tsx     # Barra de navegación móvil
 │   ├── whiteboard/
-│   │   ├── DrawingCanvas.tsx        # Lienzo HTML5 (mouse/touch, trazos, borrador, colores, caja de error)
-│   │   ├── StepByStepEditor.tsx     # Editor ágil de pasos matemáticos con simuladores rápidos
+│   │   ├── DrawingCanvas.tsx        # Lienzo HTML5 (mouse/touch, trazos, borrador, colores)
+│   │   ├── StepByStepEditor.tsx     # Editor ágil de pasos matemáticos
 │   │   └── MathKeypad.tsx           # Teclado matemático rápido (x², √, ±, paréntesis)
 │   ├── visualFeedback/
 │   │   ├── ErrorStepMarker.tsx      # Marcado visual animado del paso roto
 │   │   └── WeakFoundationCard.tsx   # Tarjeta de causa raíz y regla de oro matemática
 │   └── common/
-│       └── Icons.tsx                # Iconografía SVG nativa de alta fidelidad
-├── screens/                         # Vistas de las 8 pantallas Stitch
+│       ├── BalamJaguarAvatar.tsx    # Avatar SVG del jaguar Balam
+│       └── TextileRibbon.tsx        # Cinta textil decorativa guatemalteca
+├── screens/                         # Las 9 pantallas del flujo
 ├── App.tsx                          # Orquestador del flujo y enrutador de pantallas
 ├── main.tsx
 └── index.css

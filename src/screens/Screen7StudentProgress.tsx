@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StudentProfile } from '../domain/types';
+import { balamRepository } from '../persistence/balamRepository';
 import { TextileRibbon } from '../components/common/TextileRibbon';
 
 export interface Screen7StudentProgressProps {
@@ -20,70 +21,87 @@ interface BadgeInfo {
   unlocked: boolean;
 }
 
-const BADGES: BadgeInfo[] = [
-  {
-    id: 'jaguar',
-    title: 'Jaguar de Jade',
-    icon: 'pets',
-    statusText: 'Activo 🌟',
-    statusColor: 'bg-primary text-on-primary',
-    level: 'Constancia y Enfoque Semanal',
-    criteria: 'Completaste 5 días ininterrumpidos tejiendo matemáticas en tu telar con dedicación superior a 20 minutos diarios.',
-    date: 'Obtenida hoy: Viernes (Racha de 5 días)',
-    unlocked: true
-  },
-  {
-    id: 'potencias',
-    title: 'Bordado Potencias',
-    icon: 'grid_goldenratio',
-    statusText: 'Ganado ✨',
-    statusColor: 'bg-secondary text-on-secondary',
-    level: 'Aritmética y Leyes de Exponentes',
-    criteria: 'Dominio impecable de potencias y bases con un 94% de precisión en tu última sesión guiada.',
-    date: 'Obtenida: Miércoles 22 de Octubre',
-    unlocked: true
-  },
-  {
-    id: 'nudo',
-    title: 'Nudo Firme',
-    icon: 'security',
-    statusText: 'Firme 🛡️',
-    statusColor: 'bg-tertiary text-on-tertiary',
-    level: 'Autocorrección y Metacognición',
-    criteria: 'Detectaste y reparaste un tropiezo conceptual en el orden PEMDAS al primer intento con asistencia del tutor Balam.',
-    date: 'Obtenida: Jueves 23 de Octubre',
-    unlocked: true
-  },
-  {
-    id: 'quetzal',
-    title: 'Quetzal Algebraico',
-    icon: 'lock',
-    statusText: '60% 🔒',
-    statusColor: 'bg-surface-container-highest text-on-surface-variant',
-    level: 'Álgebra Lineal y Despejes',
-    criteria: 'Criterio pendiente: Resuelve 4 ecuaciones más con propiedad distributiva y simplificación de términos semejantes.',
-    date: 'Meta estimada: Próxima semana',
-    unlocked: false
-  }
-];
-
-const WEEK_DAYS = [
-  { key: 'lun', label: 'Lun', done: true, icon: 'check_circle', title: 'Lunes: 25 min de práctica', sub: 'Repaso de fracciones equivalentes y 4 problemas resueltos' },
-  { key: 'mar', label: 'Mar', done: true, icon: 'check_circle', title: 'Martes: 30 min de práctica', sub: 'Multiplicación algebraica y 5 problemas resueltos' },
-  { key: 'mie', label: 'Mié', done: true, icon: 'check_circle', title: 'Miércoles: 20 min de práctica', sub: 'Introducción a exponentes y leyes de potencias' },
-  { key: 'jue', label: 'Jue', done: true, icon: 'check_circle', title: 'Jueves: 40 min de práctica', sub: 'Detección de nudo en PEMDAS y remediación guiada' },
-  { key: 'vie', label: 'Vie', done: true, icon: 'stars', title: 'Viernes: 35 min de pizarra', sub: 'Resolviste 6 ejercicios de PEMDAS con 1 pausa activa' },
-  { key: 'sab', label: 'Sáb', done: false, icon: 'circle', title: 'Sábado: Práctica opcional', sub: '2 micro-desafíos de repaso preparados si deseas tejer' },
-  { key: 'dom', label: 'Dom', done: false, icon: 'bedtime', title: 'Domingo: Descanso merecido', sub: 'Tu cerebro asimila los conceptos aprendidos en la semana' }
-];
-
 export const Screen7StudentProgress: React.FC<Screen7StudentProgressProps> = ({
   profile,
   onGoToWhiteboard,
   onGoToTeacherView
 }) => {
-  const studentName = profile?.name || 'Camila Morales';
-  const gradeLabel = profile?.grade || '3ero Básico · INSO';
+  const metrics = balamRepository.getUserMetrics();
+  const diagnostic = balamRepository.getDiagnostic();
+
+  const studentName = profile?.name || 'Estudiante';
+  const gradeLabel = profile?.grade || 'Básico';
+
+  // Overall mastery percentage calculated from real concepts
+  let masteryPercent = 0;
+  if (diagnostic?.adultSummary?.conceptMastery && diagnostic.adultSummary.conceptMastery.length > 0) {
+    const sum = diagnostic.adultSummary.conceptMastery.reduce((acc, c) => acc + c.masteryPercentage, 0);
+    masteryPercent = Math.round(sum / diagnostic.adultSummary.conceptMastery.length);
+  } else if (metrics.completedNodes > 0) {
+    masteryPercent = Math.min(100, Math.round((metrics.completedNodes / 20) * 100));
+  }
+
+  // 238.7 is the circumference of radius 38 (2 * PI * 38)
+  const circleOffset = Math.max(0, 238.7 - (238.7 * masteryPercent) / 100);
+
+  const BADGES: BadgeInfo[] = [
+    {
+      id: 'jaguar',
+      title: 'Jaguar de Jade',
+      icon: 'pets',
+      statusText: metrics.streakDays >= 5 ? 'Activo 🌟' : 'Bloqueado 🔒',
+      statusColor: metrics.streakDays >= 5 ? 'bg-primary text-on-primary' : 'bg-surface-container-highest text-on-surface-variant',
+      level: 'Constancia y Enfoque Semanal',
+      criteria: 'Completa 5 días ininterrumpidos tejiendo matemáticas en tu telar con dedicación diaria.',
+      date: metrics.streakDays >= 5 ? 'Obtenida hoy' : 'Pendiente',
+      unlocked: metrics.streakDays >= 5
+    },
+    {
+      id: 'potencias',
+      title: 'Bordado Potencias',
+      icon: 'grid_goldenratio',
+      statusText: metrics.completedExercisesCount >= 3 ? 'Ganado ✨' : 'Bloqueado 🔒',
+      statusColor: metrics.completedExercisesCount >= 3 ? 'bg-secondary text-on-secondary' : 'bg-surface-container-highest text-on-surface-variant',
+      level: 'Aritmética y Leyes de Exponentes',
+      criteria: 'Dominio de potencias y bases demostrado en tus sesiones guiadas.',
+      date: metrics.completedExercisesCount >= 3 ? 'Obtenida recientemente' : 'Pendiente',
+      unlocked: metrics.completedExercisesCount >= 3
+    },
+    {
+      id: 'nudo',
+      title: 'Nudo Firme',
+      icon: 'security',
+      statusText: diagnostic && diagnostic.isCorrect ? 'Firme 🛡️' : 'Bloqueado 🔒',
+      statusColor: diagnostic && diagnostic.isCorrect ? 'bg-tertiary text-on-tertiary' : 'bg-surface-container-highest text-on-surface-variant',
+      level: 'Autocorrección y Metacognición',
+      criteria: 'Detectar y reparar un tropiezo conceptual en el orden operacional.',
+      date: diagnostic && diagnostic.isCorrect ? 'Obtenida' : 'Pendiente',
+      unlocked: Boolean(diagnostic && diagnostic.isCorrect)
+    },
+    {
+      id: 'quetzal',
+      title: 'Quetzal Algebraico',
+      icon: 'lock',
+      statusText: 'Bloqueado 🔒',
+      statusColor: 'bg-surface-container-highest text-on-surface-variant',
+      level: 'Álgebra Lineal y Despejes',
+      criteria: 'Criterio pendiente: Resuelve ecuaciones con propiedad distributiva y despeje.',
+      date: 'Meta estimada',
+      unlocked: false
+    }
+  ];
+
+  const unlockedBadgesCount = BADGES.filter(b => b.unlocked).length;
+
+  const WEEK_DAYS = [
+    { key: 'lun', label: 'Lun', done: (metrics.practiceMinutesByDay['lun'] || 0) > 0, icon: (metrics.practiceMinutesByDay['lun'] || 0) > 0 ? 'check_circle' : 'circle', title: `Lunes: ${metrics.practiceMinutesByDay['lun'] || 0} min de práctica`, sub: (metrics.practiceMinutesByDay['lun'] || 0) > 0 ? 'Sesión completada' : 'Sin práctica registrada' },
+    { key: 'mar', label: 'Mar', done: (metrics.practiceMinutesByDay['mar'] || 0) > 0, icon: (metrics.practiceMinutesByDay['mar'] || 0) > 0 ? 'check_circle' : 'circle', title: `Martes: ${metrics.practiceMinutesByDay['mar'] || 0} min de práctica`, sub: (metrics.practiceMinutesByDay['mar'] || 0) > 0 ? 'Sesión completada' : 'Sin práctica registrada' },
+    { key: 'mie', label: 'Mié', done: (metrics.practiceMinutesByDay['mie'] || 0) > 0, icon: (metrics.practiceMinutesByDay['mie'] || 0) > 0 ? 'check_circle' : 'circle', title: `Miércoles: ${metrics.practiceMinutesByDay['mie'] || 0} min de práctica`, sub: (metrics.practiceMinutesByDay['mie'] || 0) > 0 ? 'Sesión completada' : 'Sin práctica registrada' },
+    { key: 'jue', label: 'Jue', done: (metrics.practiceMinutesByDay['jue'] || 0) > 0, icon: (metrics.practiceMinutesByDay['jue'] || 0) > 0 ? 'check_circle' : 'circle', title: `Jueves: ${metrics.practiceMinutesByDay['jue'] || 0} min de práctica`, sub: (metrics.practiceMinutesByDay['jue'] || 0) > 0 ? 'Sesión completada' : 'Sin práctica registrada' },
+    { key: 'vie', label: 'Vie', done: (metrics.practiceMinutesByDay['vie'] || 0) > 0, icon: (metrics.practiceMinutesByDay['vie'] || 0) > 0 ? 'stars' : 'circle', title: `Viernes: ${metrics.practiceMinutesByDay['vie'] || 0} min de práctica`, sub: (metrics.practiceMinutesByDay['vie'] || 0) > 0 ? 'Sesión completada' : 'Sin práctica registrada' },
+    { key: 'sab', label: 'Sáb', done: (metrics.practiceMinutesByDay['sab'] || 0) > 0, icon: 'circle', title: `Sábado: ${metrics.practiceMinutesByDay['sab'] || 0} min de práctica`, sub: (metrics.practiceMinutesByDay['sab'] || 0) > 0 ? 'Sesión completada' : 'Práctica opcional' },
+    { key: 'dom', label: 'Dom', done: (metrics.practiceMinutesByDay['dom'] || 0) > 0, icon: 'bedtime', title: `Domingo: ${metrics.practiceMinutesByDay['dom'] || 0} min de práctica`, sub: 'Descanso o repaso' }
+  ];
 
   const [showBreakdown, setShowBreakdown] = useState(false);
   const [selectedDay, setSelectedDay] = useState('vie');
@@ -93,11 +111,15 @@ export const Screen7StudentProgress: React.FC<Screen7StudentProgressProps> = ({
 
   const activeDayData = WEEK_DAYS.find(d => d.key === selectedDay) || WEEK_DAYS[4];
 
+  const conceptsEvaluated = diagnostic?.adultSummary?.conceptMastery?.length || 0;
+  const conceptsMastered = diagnostic?.adultSummary?.conceptMastery?.filter(c => c.status === 'mastered').length || 0;
+  const conceptsReinforcement = diagnostic?.adultSummary?.conceptMastery?.filter(c => c.status !== 'mastered').length || 0;
+
   const handleDownloadPDF = () => {
     setIsDownloading(true);
     setTimeout(() => {
       setIsDownloading(false);
-      setToastMessage('Reporte generado: Listo para Licda. Carmen Morales (PDF, 420 KB)');
+      setToastMessage('Reporte generado exitosamente (PDF, listo para compartir)');
       setTimeout(() => setToastMessage(null), 4000);
     }, 1200);
   };
@@ -106,7 +128,7 @@ export const Screen7StudentProgress: React.FC<Screen7StudentProgressProps> = ({
     if (navigator.share) {
       navigator.share({
         title: 'Mi progreso en Balam Matemática',
-        text: `¡Hola! Alcancé 85% de solidez matemática y 5 días de racha en Balam.`,
+        text: `¡Hola! Alcancé ${masteryPercent}% de solidez matemática y ${metrics.streakDays} días de racha en Balam.`,
         url: window.location.href
       }).catch(() => {});
     } else {
@@ -238,24 +260,30 @@ export const Screen7StudentProgress: React.FC<Screen7StudentProgressProps> = ({
                   r="38"
                   stroke="currentColor"
                   strokeDasharray="238.7"
-                  strokeDashoffset="52.5" // 78% of 238.7
+                  strokeDashoffset={circleOffset}
                   strokeLinecap="round"
                   strokeWidth="8"
                 />
               </svg>
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center">
-                <span className="font-mono text-lg font-bold text-on-surface">78%</span>
-                <span className="font-mono text-[8px] uppercase tracking-tighter text-on-surface-variant font-bold">Firme</span>
+                <span className="font-mono text-lg font-bold text-on-surface">{masteryPercent}%</span>
+                <span className="font-mono text-[8px] uppercase tracking-tighter text-on-surface-variant font-bold">
+                  {masteryPercent > 0 ? 'Firme' : 'Por tejer'}
+                </span>
               </div>
             </div>
 
             <div className="flex-1 min-w-0 flex flex-col justify-center">
               <div className="flex items-center gap-1 text-primary">
                 <span className="material-symbols-outlined text-[18px]">verified</span>
-                <span className="font-sans text-sm font-bold text-on-surface">¡Calidad de avance!</span>
+                <span className="font-sans text-sm font-bold text-on-surface">
+                  {masteryPercent > 0 ? '¡Calidad de avance!' : '¡Comienza a tejer!'}
+                </span>
               </div>
               <p className="font-sans text-xs text-on-surface-variant line-clamp-2 mt-0.5">
-                Tu tejido matemático muestra gran simetría y solidez en razonamiento.
+                {masteryPercent > 0
+                  ? 'Tu tejido matemático muestra gran simetría y solidez en razonamiento.'
+                  : 'Resuelve problemas en la pizarra para comenzar a construir tu telar de dominio.'}
               </p>
               <span className="inline-flex items-center gap-1 text-[11px] font-mono text-primary mt-1 font-bold">
                 <span className="material-symbols-outlined text-[14px]">touch_app</span>
@@ -269,21 +297,25 @@ export const Screen7StudentProgress: React.FC<Screen7StudentProgressProps> = ({
             <div className="mt-3 p-3 rounded-xl bg-surface-container-low border border-outline-variant/30 text-xs text-on-surface animate-fadeIn space-y-1.5">
               <div className="flex items-center justify-between pb-1.5 border-b border-outline-variant/20 mb-1">
                 <span className="font-sans font-bold text-on-surface">Detalle de Urdimbre</span>
-                <span className="font-mono text-primary font-bold">16 temas evaluados</span>
+                <span className="font-mono text-primary font-bold">{conceptsEvaluated} temas evaluados</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-primary" />
                   Hilos firmes y dominados:
                 </span>
-                <strong className="font-mono text-primary">14 temas (87.5%)</strong>
+                <strong className="font-mono text-primary">
+                  {conceptsMastered} temas ({conceptsEvaluated > 0 ? Math.round((conceptsMastered / conceptsEvaluated) * 100) : 0}%)
+                </strong>
               </div>
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-tertiary" />
                   Hilos en refuerzo guiado:
                 </span>
-                <strong className="font-mono text-tertiary">2 temas (12.5%)</strong>
+                <strong className="font-mono text-tertiary">
+                  {conceptsReinforcement} temas ({conceptsEvaluated > 0 ? Math.round((conceptsReinforcement / conceptsEvaluated) * 100) : 0}%)
+                </strong>
               </div>
             </div>
           )}
@@ -291,15 +323,15 @@ export const Screen7StudentProgress: React.FC<Screen7StudentProgressProps> = ({
           {/* Quick Stats Grid */}
           <div className="grid grid-cols-3 gap-2 mt-3 pt-3 border-t border-surface-container-highest">
             <div className="flex flex-col items-center p-2 rounded-xl bg-surface-container-low text-center">
-              <span className="font-mono text-base font-bold text-primary">14</span>
+              <span className="font-mono text-base font-bold text-primary">{conceptsMastered}</span>
               <span className="font-mono text-[10px] text-on-surface-variant mt-0.5 font-bold">Firmes</span>
             </div>
             <div className="flex flex-col items-center p-2 rounded-xl bg-surface-container-low text-center">
-              <span className="font-mono text-base font-bold text-tertiary">2</span>
+              <span className="font-mono text-base font-bold text-tertiary">{conceptsReinforcement}</span>
               <span className="font-mono text-[10px] text-on-surface-variant mt-0.5 font-bold">En refuerzo</span>
             </div>
             <div className="flex flex-col items-center p-2 rounded-xl bg-surface-container-low text-center">
-              <span className="font-mono text-base font-bold text-secondary">320</span>
+              <span className="font-mono text-base font-bold text-secondary">{metrics.points}</span>
               <span className="font-mono text-[10px] text-on-surface-variant mt-0.5 font-bold">Hilos (pts)</span>
             </div>
           </div>
@@ -315,42 +347,60 @@ export const Screen7StudentProgress: React.FC<Screen7StudentProgressProps> = ({
               <h2 className="font-serif text-sm font-bold text-on-surface">Evolución en Hilos Críticos</h2>
             </div>
             <span className="font-mono text-[11px] text-primary uppercase font-bold tracking-wider">
-              ¡Superado!
+              {diagnostic?.isCorrect ? '¡Superado!' : diagnostic ? 'En Diagnóstico' : 'Inicial'}
             </span>
           </div>
 
-          <div className="p-3 rounded-xl bg-surface-container-low flex flex-col space-y-2 border border-outline-variant/30">
-            <div className="flex items-center justify-between">
-              <span className="font-sans text-xs font-bold text-on-surface">Jerarquía de Operaciones</span>
-              <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-primary text-on-primary font-bold">
-                PEMDAS
-              </span>
-            </div>
+          {diagnostic ? (
+            <div className="p-3 rounded-xl bg-surface-container-low flex flex-col space-y-2 border border-outline-variant/30">
+              <div className="flex items-center justify-between">
+                <span className="font-sans text-xs font-bold text-on-surface">
+                  {diagnostic.visualFeedback?.foundationGuide?.conceptName || 'Jerarquía de Operaciones'}
+                </span>
+                <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-primary text-on-primary font-bold">
+                  {diagnostic.isCorrect ? 'Dominado' : 'Refuerzo'}
+                </span>
+              </div>
 
-            {/* Before vs After */}
-            <div className="flex items-center justify-between text-xs font-mono pt-1 text-on-surface-variant">
-              <span className="flex items-center gap-1 text-red-600">
-                <span className="w-2 h-2 rounded-full bg-red-400" />
-                Antes: 40% (hilo flojo)
-              </span>
-              <span className="material-symbols-outlined text-primary text-[16px]">arrow_forward</span>
-              <span className="flex items-center gap-1 font-bold text-primary">
-                <span className="w-2 h-2 rounded-full bg-primary" />
-                Hoy: 85% (afianzado)
-              </span>
-            </div>
+              {/* Before vs After */}
+              <div className="flex items-center justify-between text-xs font-mono pt-1 text-on-surface-variant">
+                <span className="flex items-center gap-1 text-red-600">
+                  <span className="w-2 h-2 rounded-full bg-red-400" />
+                  Base: {diagnostic.isCorrect ? 'Superada' : 'En detección'}
+                </span>
+                <span className="material-symbols-outlined text-primary text-[16px]">arrow_forward</span>
+                <span className="flex items-center gap-1 font-bold text-primary">
+                  <span className="w-2 h-2 rounded-full bg-primary" />
+                  Hoy: {masteryPercent}%
+                </span>
+              </div>
 
-            {/* Dual Progress Bar */}
-            <div className="relative w-full h-3 rounded-full bg-surface-container-highest overflow-hidden">
-              <div className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-700" style={{ width: '85%' }} />
-              <div className="absolute inset-y-0 left-0 bg-amber-300 opacity-40 rounded-full" style={{ width: '40%' }} />
-            </div>
+              {/* Dual Progress Bar */}
+              <div className="relative w-full h-3 rounded-full bg-surface-container-highest overflow-hidden">
+                <div className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-700" style={{ width: `${masteryPercent}%` }} />
+              </div>
 
-            <p className="font-sans text-xs text-on-surface-variant pt-1 flex items-start gap-1.5">
-              <span className="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">lightbulb</span>
-              <span>Superaste el tropiezo con potencias tras 3 sesiones guiadas en la Pizarra Viva.</span>
-            </p>
-          </div>
+              <p className="font-sans text-xs text-on-surface-variant pt-1 flex items-start gap-1.5">
+                <span className="material-symbols-outlined text-primary text-[16px] shrink-0 mt-0.5">lightbulb</span>
+                <span>{diagnostic.visualFeedback?.calloutDescription || 'Sesión de análisis pedagógico completada.'}</span>
+              </p>
+            </div>
+          ) : (
+            <div className="p-3 rounded-xl bg-surface-container-low flex flex-col space-y-2 border border-outline-variant/30">
+              <div className="flex items-center justify-between">
+                <span className="font-sans text-xs font-bold text-on-surface">Jerarquía de Operaciones</span>
+                <span className="font-mono text-[10px] px-2 py-0.5 rounded bg-surface-container text-on-surface-variant font-bold">
+                  Sin registro
+                </span>
+              </div>
+              <p className="font-sans text-xs text-on-surface-variant">
+                Aún no tienes actividad registrada en hilos críticos. Resuelve un problema en la Pizarra para diagnosticar tu razonamiento.
+              </p>
+              <div className="relative w-full h-3 rounded-full bg-surface-container-highest overflow-hidden">
+                <div className="absolute inset-y-0 left-0 bg-primary rounded-full transition-all duration-700" style={{ width: '0%' }} />
+              </div>
+            </div>
+          )}
         </div>
 
         {/* Ritmo Semanal (7 días) */}
@@ -364,7 +414,7 @@ export const Screen7StudentProgress: React.FC<Screen7StudentProgressProps> = ({
             </div>
             <div className="flex items-center gap-1 text-primary">
               <span className="material-symbols-outlined text-[16px]">local_fire_department</span>
-              <span className="font-mono text-xs font-bold">5 días seguidos</span>
+              <span className="font-mono text-xs font-bold">{metrics.streakDays} días seguidos</span>
             </div>
           </div>
 
@@ -418,7 +468,7 @@ export const Screen7StudentProgress: React.FC<Screen7StudentProgressProps> = ({
               </div>
               <h2 className="font-serif text-sm font-bold text-on-surface">Insignias del Telar</h2>
             </div>
-            <span className="font-mono text-xs text-on-surface-variant font-bold">3 de 4</span>
+            <span className="font-mono text-xs text-on-surface-variant font-bold">{unlockedBadgesCount} de 4</span>
           </div>
 
           <div className="grid grid-cols-2 gap-2.5">
@@ -472,7 +522,7 @@ export const Screen7StudentProgress: React.FC<Screen7StudentProgressProps> = ({
             ) : (
               <>
                 <span className="material-symbols-outlined text-[18px]">download</span>
-                <span>Descargar Reporte para mi Docente (PDF)</span>
+                <span>Descargar Reporte de Progreso (PDF)</span>
               </>
             )}
           </button>

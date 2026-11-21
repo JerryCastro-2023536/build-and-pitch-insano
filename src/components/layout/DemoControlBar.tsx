@@ -5,14 +5,12 @@ export interface DemoControlBarProps {
   currentStep: ScreenId;
   onGoToStep: (step: ScreenId) => void;
   onResetDemo: () => void;
-  onLoadPitchScenario: () => void;
 }
 
 export const DemoControlBar: React.FC<DemoControlBarProps> = ({
   currentStep,
   onGoToStep,
-  onResetDemo,
-  onLoadPitchScenario
+  onResetDemo
 }) => {
   // 4-minute pitch countdown stopwatch
   const [secondsRemaining, setSecondsRemaining] = useState<number>(240); // 4 minutes
@@ -42,9 +40,9 @@ export const DemoControlBar: React.FC<DemoControlBarProps> = ({
   const PITCH_STEPS: { num: number; screenId: ScreenId; label: string }[] = [
     { num: 1, screenId: 1, label: '1. Registro' },
     { num: 2, screenId: 3, label: '2. Pizarra' },
-    { num: 3, screenId: 4, label: '3. Diagnóstico (Paso 3)' },
-    { num: 4, screenId: 5, label: '4. Remediación (PEMDAS)' },
-    { num: 5, screenId: 9, label: '5. Base Reparada (94%)' }
+    { num: 3, screenId: 4, label: '3. Diagnóstico' },
+    { num: 4, screenId: 5, label: '4. Remediación' },
+    { num: 5, screenId: 9, label: '5. Base Reparada' }
   ];
 
   return (
@@ -100,16 +98,6 @@ export const DemoControlBar: React.FC<DemoControlBarProps> = ({
             ↻
           </button>
         </div>
-
-        {/* 1-Click Pitch Scenario Button */}
-        <button
-          onClick={onLoadPitchScenario}
-          className="bg-[#0D9488] hover:bg-[#0b7c72] text-white font-mono font-bold px-3 py-1 rounded shadow-[2px_2px_0px_#201b0d] transition-all flex items-center gap-1.5 text-xs active:translate-x-0.5 active:translate-y-0.5"
-          title="Cargar escenario oficial de Camila Morales (14 años, 3ero Básico)"
-        >
-          <span className="material-symbols-outlined text-[15px]">bolt</span>
-          <span>Pitch 1-Click</span>
-        </button>
 
         {/* Reset Demo Button */}
         <button

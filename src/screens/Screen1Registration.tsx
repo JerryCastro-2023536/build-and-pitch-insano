@@ -6,15 +6,13 @@ import { TextileRibbon } from '../components/common/TextileRibbon';
 export interface Screen1RegistrationProps {
   initialProfile: StudentProfile | null;
   onRegister: (profile: StudentProfile) => void;
-  onQuickLoadPitch: () => void;
 }
 
 export const Screen1Registration: React.FC<Screen1RegistrationProps> = ({
   initialProfile,
-  onRegister,
-  onQuickLoadPitch
+  onRegister
 }) => {
-  const [name, setName] = useState(initialProfile?.name || 'David');
+  const [name, setName] = useState(initialProfile?.name || '');
   const [selectedCycle, setSelectedCycle] = useState<'basico' | 'diversificado'>('basico');
   const [selectedAge, setSelectedAge] = useState<number>(initialProfile?.age || 14);
   const [selectedTopic, setSelectedTopic] = useState<TopicType>(
@@ -72,8 +70,8 @@ export const Screen1Registration: React.FC<Screen1RegistrationProps> = ({
         name: name.trim(),
         age: selectedAge,
         grade: currentGrade,
-        school: initialProfile?.school || 'Instituto Nacional Experimental',
-        department: initialProfile?.department || 'Guatemala',
+        school: initialProfile?.school || '',
+        department: initialProfile?.department || '',
         selectedTopic,
         createdAt: initialProfile?.createdAt || new Date().toISOString(),
         avatarSeed: name.toLowerCase().replace(/\s+/g, '')
@@ -84,20 +82,6 @@ export const Screen1Registration: React.FC<Screen1RegistrationProps> = ({
 
   return (
     <div className="w-full max-w-[420px] mx-auto px-4 py-4 sm:py-6 flex flex-col gap-4 relative">
-      {/* Quick Pitch Benchmark Banner */}
-      <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#f8edd5] border border-[#d7c3ae] text-xs">
-        <span className="font-mono text-[10px] text-[#835500] font-bold uppercase tracking-wider">
-          Pitch 1-Click: Camila Morales (14a)
-        </span>
-        <button
-          type="button"
-          onClick={onQuickLoadPitch}
-          className="px-2.5 py-1 rounded-lg bg-[#0D9488] text-white font-mono text-[11px] font-bold shadow-[2px_2px_0px_#201b0d] hover:brightness-105 active:scale-95 transition-all"
-        >
-          Cargar Caso Estrella
-        </button>
-      </div>
-
       {/* Brand & Welcome Section */}
       <header className="flex flex-col items-center text-center pt-1 pb-2">
         <BalamJaguarAvatar size={76} animated className="mb-2 shadow-sm" />
@@ -167,7 +151,7 @@ export const Screen1Registration: React.FC<Screen1RegistrationProps> = ({
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Ej. Camila o David"
+                placeholder="Escribe tu nombre"
                 className="w-full h-12 px-3.5 bg-[#fef3db] text-[#201b0d] font-sans text-sm rounded-xl border border-[#d7c3ae] shadow-inner outline-none focus:ring-2 focus:ring-[#f5a623] focus:bg-white transition-all"
                 required
               />

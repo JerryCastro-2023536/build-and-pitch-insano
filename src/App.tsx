@@ -1,10 +1,11 @@
-import React, { useReducer, useEffect } from 'react';
+import React, { useReducer, useEffect, useState } from 'react';
 import { 
   StudentProfile, 
   WhiteboardSession, 
   DiagnosticResult, 
   MathStep, 
-  CanvasStroke 
+  CanvasStroke,
+  UserProgressMetrics
 } from './domain/types';
 import { ScreenId, FlowState, flowReducer } from './domain/flowStateMachine';
 import { balamRepository } from './persistence/balamRepository';
@@ -37,52 +38,36 @@ const initialFlowState: FlowState = {
 export const App: React.FC = () => {
   const [state, dispatch] = useReducer(flowReducer, initialFlowState);
   const { currentScreenId, profile, session, diagnostic, isAnalyzing } = state;
+  const [metrics, setMetrics] = useState<UserProgressMetrics>(() => balamRepository.getUserMetrics());
 
-  // Initialize from LocalStorage or pre-load pitch scenario on first visit
+  // Initialize from LocalStorage if previous user session exists
   useEffect(() => {
     const savedProfile = balamRepository.getStudentProfile();
     const savedSession = balamRepository.getCurrentSession();
     const savedDiagnostic = balamRepository.getDiagnostic();
 
-    if (savedProfile && savedDiagnostic) {
+    if (savedProfile) {
       dispatch({
-        type: 'LOAD_PITCH_SCENARIO',
+        type: 'HYDRATE_STATE',
         payload: {
           profile: savedProfile,
-          session: savedSession || balamRepository.loadPitchScenario().session,
+          session: savedSession,
           diagnostic: savedDiagnostic
         }
       });
-    } else {
-      // By default load the pitch-ready scenario of Camila Morales so the demo is immediately testable
-      const loaded = balamRepository.loadPitchScenario();
-      dispatch({
-        type: 'LOAD_PITCH_SCENARIO',
-        payload: {
-          profile: loaded.profile,
-          session: loaded.session,
-          diagnostic: loaded.diagnostic
-        }
-      });
     }
+    setMetrics(balamRepository.getUserMetrics());
   }, []);
 
-  // 1-Click Fast Pitch Scenario Loader
-  const handleLoadPitchScenario = () => {
-    const loaded = balamRepository.loadPitchScenario();
-    dispatch({
-      type: 'LOAD_PITCH_SCENARIO',
-      payload: {
-        profile: loaded.profile,
-        session: loaded.session,
-        diagnostic: loaded.diagnostic
-      }
-    });
-  };
+  // Sync metrics on screen changes
+  useEffect(() => {
+    setMetrics(balamRepository.getUserMetrics());
+  }, [currentScreenId]);
 
   // Reset Demo to fresh clean state
   const handleResetDemo = () => {
     balamRepository.resetDemo();
+    setMetrics(balamRepository.getUserMetrics());
     dispatch({ type: 'RESET_DEMO' });
   };
 
@@ -107,7 +92,7 @@ export const App: React.FC = () => {
 
       const updatedSession: WhiteboardSession = {
         id: session?.id || `session-${Date.now()}`,
-        studentId: profile?.id || 'camila-morales',
+        studentId: profile?.id || 'estudiante-activo',
         problemId: session?.problemId || 'prob-1',
         problemStatement: session?.problemStatement || 'Resuelve la ecuación cuadrática:',
         initialEquation: session?.initialEquation || '2(x + 3)^2 - 8 = 24',
@@ -150,6 +135,18 @@ export const App: React.FC = () => {
       status: 'remediated'
     };
     balamRepository.saveCurrentSession(updatedSession);
+
+    // Update real metrics for completing the problem
+    const currentMetrics = balamRepository.getUserMetrics();
+    const updatedMetrics: UserProgressMetrics = {
+      ...currentMetrics,
+      points: currentMetrics.points + 50,
+      completedNodes: Math.min(5, currentMetrics.completedNodes + 1),
+      completedExercisesCount: currentMetrics.completedExercisesCount + 1
+    };
+    balamRepository.saveUserMetrics(updatedMetrics);
+    setMetrics(updatedMetrics);
+
     dispatch({ type: 'REPAIR_PITCH_PROBLEM' });
   };
 
@@ -164,16 +161,16 @@ export const App: React.FC = () => {
         currentStep={currentScreenId}
         onGoToStep={navigateTo}
         onResetDemo={handleResetDemo}
-        onLoadPitchScenario={handleLoadPitchScenario}
       />
 
       {/* Main Header / Screen Switcher Tabs */}
       <Navbar
         currentScreenId={currentScreenId}
         onSelectScreen={navigateTo}
-        studentName={profile?.name || 'Camila Morales'}
+        studentName={profile?.name || ''}
+        streakDays={metrics.streakDays}
+        points={metrics.points}
         onResetDemo={handleResetDemo}
-        onLoadPitchScenario={handleLoadPitchScenario}
       />
 
       {/* Main View Router */}
@@ -182,7 +179,6 @@ export const App: React.FC = () => {
           <Screen1Registration
             initialProfile={profile}
             onRegister={handleRegister}
-            onQuickLoadPitch={handleLoadPitchScenario}
           />
         )}
 
@@ -200,7 +196,6 @@ export const App: React.FC = () => {
             profile={profile}
             onAnalyzeWork={handleAnalyzeWork}
             isAnalyzing={isAnalyzing}
-            onQuickLoadPitch={handleLoadPitchScenario}
           />
         )}
 

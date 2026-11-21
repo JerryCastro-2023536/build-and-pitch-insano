@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { StudentProfile } from '../domain/types';
+import { StudentProfile, UserProgressMetrics } from '../domain/types';
+import { balamRepository } from '../persistence/balamRepository';
 import { TextileRibbon } from '../components/common/TextileRibbon';
 
 export interface Screen8TeacherParentViewProps {
@@ -13,10 +14,14 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
   onGoToWhiteboard,
   onGoToSuccessRepaired
 }) => {
-  // Student selection state (toggle between Camila and David)
-  const [selectedStudent, setSelectedStudent] = useState<'camila' | 'david'>('camila');
-  const studentName = selectedStudent === 'camila' ? (profile?.name || 'Camila Morales') : 'David Morales';
-  const studentGrade = selectedStudent === 'camila' ? '3ero Básico · INSO' : '2° Básico · INSO';
+  const [metrics, setMetrics] = useState<UserProgressMetrics>(() => balamRepository.getUserMetrics());
+  const diagnostic = balamRepository.getDiagnostic();
+
+  const studentName = profile?.name || 'Estudiante';
+  const studentFirstName = studentName.split(' ')[0] || 'Estudiante';
+  const studentGrade = profile?.grade 
+    ? `${profile.grade} · ${profile.school || 'Secundaria'}` 
+    : 'Nivel Básico';
 
   // Cheer Modal state
   const [isCheerModalOpen, setIsCheerModalOpen] = useState(false);
@@ -37,10 +42,6 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
   const [pinDigits, setPinDigits] = useState<string[]>([]);
   const [pinStatus, setPinStatus] = useState<string | null>(null);
 
-  const handleSwapStudent = () => {
-    setSelectedStudent(prev => (prev === 'camila' ? 'david' : 'camila'));
-  };
-
   const handleSendCheer = (customText?: string) => {
     const textToSend = customText || cheerMsg || '¡Orgulloso de tu esfuerzo hoy!';
     setIsCheerModalOpen(false);
@@ -51,6 +52,22 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
 
   const handleSendTeacherReply = () => {
     if (!replyInput.trim()) return;
+    const newNote = {
+      id: `note-${Date.now()}`,
+      date: new Date().toISOString(),
+      teacherName: metrics.linkedTeacher || 'Familiar',
+      teacherRole: 'Seguimiento familiar',
+      note: replyInput.trim(),
+      assignedCount: 0
+    };
+    const updatedNotes = [...metrics.teacherNotes, newNote];
+    const updatedMetrics: UserProgressMetrics = {
+      ...metrics,
+      teacherNotes: updatedNotes
+    };
+    balamRepository.saveUserMetrics(updatedMetrics);
+    setMetrics(updatedMetrics);
+
     setReplyFeedback(true);
     setReplyInput('');
     setTimeout(() => {
@@ -78,6 +95,13 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
 
   const handleVerifyPin = () => {
     if (pinDigits.length === 4) {
+      const updatedMetrics: UserProgressMetrics = {
+        ...metrics,
+        linkedTeacher: metrics.linkedTeacher || 'Licda. Docente Asignada'
+      };
+      balamRepository.saveUserMetrics(updatedMetrics);
+      setMetrics(updatedMetrics);
+
       setPinStatus('¡Estudiante vinculado con éxito al centro escolar!');
       setTimeout(() => {
         setIsPinModalOpen(false);
@@ -337,11 +361,11 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
 
             <button
               type="button"
-              onClick={handleSwapStudent}
-              title="Cambiar entre estudiantes de demostración"
+              onClick={() => setIsPinModalOpen(true)}
+              title="Vincular o cambiar estudiante por código PIN"
               className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-xl bg-surface-container hover:bg-surface-container-high text-on-surface transition-colors"
             >
-              <span className="material-symbols-outlined text-[20px]">swap_horiz</span>
+              <span className="material-symbols-outlined text-[20px]">pin</span>
             </button>
           </div>
 
@@ -352,10 +376,14 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
             </span>
             <div className="flex flex-col min-w-0">
               <span className="font-mono text-[10px] text-secondary uppercase font-bold tracking-wide">
-                Sincronización activa
+                {metrics.linkedTeacher ? 'Sincronización activa' : 'Vinculación escolar'}
               </span>
               <p className="font-sans text-xs text-on-surface leading-tight mt-0.5">
-                Con <strong className="font-bold">Licda. Carmen Morales</strong> (Docente titular de Matemática).
+                {metrics.linkedTeacher ? (
+                  <>Con <strong className="font-bold">{metrics.linkedTeacher}</strong> (Docente titular de Matemática).</>
+                ) : (
+                  'Sin docente vinculado. Ingresa el PIN escolar para conectar el aula.'
+                )}
               </p>
             </div>
           </div>
@@ -368,10 +396,14 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
             <span className="font-mono text-xs font-bold text-on-surface">Unidad: Jerarquía y Potencias</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-            <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-            <span className="w-2.5 h-2.5 rounded-full bg-primary" />
-            <span className="w-2.5 h-2.5 rounded-full bg-surface-variant" />
+            {[0, 1, 2, 3].map(i => (
+              <span
+                key={i}
+                className={`w-2.5 h-2.5 rounded-full ${
+                  metrics.completedNodes > i ? 'bg-primary' : 'bg-surface-variant'
+                }`}
+              />
+            ))}
           </div>
         </div>
 
@@ -381,27 +413,41 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
             <div className="w-8 h-8 rounded-full bg-primary-container/30 flex items-center justify-center text-primary">
               <span className="material-symbols-outlined text-[18px]">psychology_alt</span>
             </div>
-            <h2 className="font-serif text-sm font-bold text-on-surface">¿En qué trabaja {studentName.split(' ')[0]} hoy?</h2>
+            <h2 className="font-serif text-sm font-bold text-on-surface">¿En qué trabaja {studentFirstName} hoy?</h2>
           </div>
 
-          <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
-            {studentName.split(' ')[0]} comprende con mucha solidez la suma y la multiplicación. Su tropiezo reciente ocurre al toparse con números elevados al cuadrado o al cubo (como <span className="font-mono bg-surface-container px-1 py-0.5 rounded text-on-surface font-bold">4²</span>), donde tiende a sumar antes de calcular la potencia.
-          </p>
+          {diagnostic ? (
+            <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
+              {studentFirstName} comprende las operaciones básicas. Su diagnóstico identificó una oportunidad de afianzar la regla:{' '}
+              <span className="font-mono bg-surface-container px-1 py-0.5 rounded text-on-surface font-bold">
+                {diagnostic.visualFeedback.ruleBroken}
+              </span>.
+            </p>
+          ) : (
+            <p className="font-sans text-xs text-on-surface-variant leading-relaxed">
+              {studentFirstName} aún no ha realizado un diagnóstico de razonamiento en la pizarra. Una vez resuelto el primer ejercicio, aquí verás la explicación clara de sus fortalezas y áreas de apoyo.
+            </p>
+          )}
 
           <div className="bg-surface-container-low rounded-xl p-3 flex flex-col gap-2 border border-outline-variant/30">
             <div className="flex items-center justify-between text-on-surface">
               <span className="font-mono text-[10px] text-on-surface-variant uppercase tracking-wider font-bold">
                 Estado pedagógico
               </span>
-              <span className="font-mono text-sm font-bold text-primary">85% afianzado</span>
+              <span className="font-mono text-sm font-bold text-primary">
+                {diagnostic ? `${Math.round(metrics.completedNodes * 20)}% afianzado` : '0% afianzado'}
+              </span>
             </div>
             <div className="w-full bg-surface-variant h-2.5 rounded-full overflow-hidden">
-              <div className="bg-primary h-full transition-all duration-700 rounded-full" style={{ width: '85%' }} />
+              <div
+                className="bg-primary h-full transition-all duration-700 rounded-full"
+                style={{ width: `${diagnostic ? Math.round(metrics.completedNodes * 20) : 0}%` }}
+              />
             </div>
             <div className="flex items-center gap-2 pt-0.5">
               <span className="material-symbols-outlined text-primary text-[16px]">verified_user</span>
               <span className="font-sans text-xs font-semibold text-on-surface">
-                En proceso de remediación guiada en Balam
+                {diagnostic ? 'En proceso de remediación guiada en Balam' : 'Pendiente de diagnóstico inicial'}
               </span>
             </div>
           </div>
@@ -422,8 +468,21 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
           </div>
 
           <p className="font-sans text-xs text-on-surface leading-relaxed">
-            Cuando veas que {studentName.split(' ')[0]} hace su tarea, recuérdale con una sonrisa:
-            <span className="font-bold text-primary italic block mt-1">«¡Primero la corona de la potencia, luego el resto!»</span>
+            {diagnostic ? (
+              <>
+                Cuando veas que {studentFirstName} hace su tarea, recuérdale con una sonrisa:
+                <span className="font-bold text-primary italic block mt-1">
+                  «¡{diagnostic.adultSummary.parentTips[0] || 'Primero la corona de la potencia, luego el resto!'}»
+                </span>
+              </>
+            ) : (
+              <>
+                Cuando {studentFirstName} empiece a resolver ejercicios en la pizarra digital, acompáñale observando su proceso en el cuaderno:
+                <span className="font-bold text-primary italic block mt-1">
+                  «¡Paso a paso se teje el entendimiento!»
+                </span>
+              </>
+            )}
           </p>
 
           <div className="bg-white/90 rounded-xl p-2.5 flex items-start gap-2 border border-amber-200/60">
@@ -444,34 +503,53 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
               <h2 className="font-serif text-sm font-bold text-on-surface">Bitácora Docente</h2>
             </div>
             <span className="font-mono text-[10px] text-on-surface-variant flex items-center gap-1">
-              <span className="material-symbols-outlined text-[12px]">schedule</span> Hoy, 11:30 AM
+              <span className="material-symbols-outlined text-[12px]">schedule</span> {metrics.teacherNotes.length > 0 ? 'Actualizado' : 'Sin pendientes'}
             </span>
           </div>
 
-          <div className="bg-surface-container-low rounded-xl p-3 flex flex-col gap-2 border border-outline-variant/30">
-            <div className="flex items-center gap-2.5">
-              <div className="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-serif text-xs font-bold">
-                CM
+          {metrics.teacherNotes.length > 0 ? (
+            metrics.teacherNotes.map((note, idx) => (
+              <div key={idx} className="bg-surface-container-low rounded-xl p-3 flex flex-col gap-2 border border-outline-variant/30">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-7 h-7 rounded-full bg-secondary text-on-secondary flex items-center justify-center font-serif text-xs font-bold">
+                    {note.teacherName.slice(0, 2).toUpperCase()}
+                  </div>
+                  <div className="flex flex-col">
+                    <span className="font-sans text-xs font-bold text-on-surface">{note.teacherName}</span>
+                    <span className="font-sans text-[10px] text-on-surface-variant">{note.teacherRole}</span>
+                  </div>
+                </div>
+                <p className="font-sans text-xs text-on-surface leading-relaxed pl-9">
+                  «{note.note}»
+                </p>
               </div>
-              <div className="flex flex-col">
-                <span className="font-sans text-xs font-bold text-on-surface">Licda. Carmen Morales</span>
-                <span className="font-sans text-[10px] text-on-surface-variant">Profesora de Matemáticas 2° Básico</span>
+            ))
+          ) : (
+            <div className="bg-surface-container-low rounded-xl p-3 flex flex-col gap-2 border border-outline-variant/30">
+              <div className="flex items-center gap-2.5">
+                <div className="w-7 h-7 rounded-full bg-secondary/30 text-secondary flex items-center justify-center font-serif text-xs font-bold">
+                  <span className="material-symbols-outlined text-[14px]">edit_note</span>
+                </div>
+                <div className="flex flex-col">
+                  <span className="font-sans text-xs font-bold text-on-surface">Bitácora de Observaciones</span>
+                  <span className="font-sans text-[10px] text-on-surface-variant">Sin notas pendientes</span>
+                </div>
               </div>
+              <p className="font-sans text-xs text-on-surface-variant leading-relaxed pl-9">
+                Aún no hay notas registradas por el docente. Las tareas y comentarios asignados aparecerán aquí automáticamente.
+              </p>
             </div>
-            <p className="font-sans text-xs text-on-surface leading-relaxed pl-9">
-              «{studentName.split(' ')[0]} mostró gran avance hoy en clase resolviendo ejercicios de pizarrón. Asigné 3 ejercicios de refuerzo en Balam para sellar el tema antes de la evaluación del viernes.»
-            </p>
-          </div>
+          )}
 
           <div className="flex items-center justify-between flex-wrap gap-2">
             <div className="flex items-center gap-1.5 flex-wrap">
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-on-surface font-mono text-[10px]">
                 <span className="material-symbols-outlined text-[14px] text-primary">task_alt</span>
-                3 asignados
+                {metrics.completedExercisesCount} completados
               </span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-surface-container text-on-surface font-mono text-[10px]">
                 <span className="material-symbols-outlined text-[14px] text-secondary">event</span>
-                Prueba: Viernes
+                {metrics.linkedTeacher ? 'Docente vinculado' : 'Sin docente vinculado'}
               </span>
             </div>
 
@@ -492,10 +570,10 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
           {isReplyOpen && (
             <div className="flex flex-col gap-2 pt-2 border-t border-outline-variant/40 animate-fadeIn">
               <span className="font-mono text-[10px] text-on-surface-variant uppercase font-bold tracking-wider">
-                Nota rápida a Licda. Carmen
+                Nota rápida a {metrics.linkedTeacher || 'Docente'}
               </span>
               <div className="flex gap-1.5 flex-wrap">
-                {['¡Gracias! Reforzaremos hoy', 'Comprendido, pendientes de la prueba'].map((chip, idx) => (
+                {['¡Gracias! Reforzaremos hoy', 'Comprendido, pendientes de la práctica'].map((chip, idx) => (
                   <button
                     key={idx}
                     type="button"
@@ -627,7 +705,7 @@ export const Screen8TeacherParentView: React.FC<Screen8TeacherParentViewProps> =
               className="w-full min-h-[44px] py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-mono text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 shadow-sm transition-all"
             >
               <span className="material-symbols-outlined text-[18px]">military_tech</span>
-              <span>Ver Cierre del Pitch (Base Reparada 42% ➔ 94%)</span>
+              <span>Ver Cierre (Base Reparada)</span>
             </button>
           )}
 

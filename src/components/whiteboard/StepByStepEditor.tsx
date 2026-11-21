@@ -70,7 +70,7 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
               type="button"
               onClick={onSimulateError}
               className="px-2.5 py-1 rounded-lg bg-[#ffd9df] hover:bg-[#ffb1c2] text-[#910040] border border-[#b90c55]/40 font-mono text-[10px] font-bold transition-all shadow-xs active:scale-95"
-              title="Simular caso de Camila Morales: error de jerarquía en paso 3"
+              title="Simular error típico en paso 3"
             >
               Simular Error (Paso 3)
             </button>

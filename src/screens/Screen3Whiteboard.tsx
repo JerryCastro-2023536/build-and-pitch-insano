@@ -10,19 +10,19 @@ export interface Screen3WhiteboardProps {
   profile: StudentProfile | null;
   onAnalyzeWork: (steps: MathStep[], strokes: CanvasStroke[]) => Promise<void>;
   isAnalyzing: boolean;
-  onQuickLoadPitch: () => void;
 }
 
 export const Screen3Whiteboard: React.FC<Screen3WhiteboardProps> = ({
   profile,
   onAnalyzeWork,
-  isAnalyzing,
-  onQuickLoadPitch
+  isAnalyzing
 }) => {
   const topic = profile?.selectedTopic || 'ecuacion_cuadratica';
   const problem = CURRICULUM_PROBLEMS.find((p) => p.topic === topic) || CURRICULUM_PROBLEMS[0];
 
-  const [steps, setSteps] = useState<MathStep[]>(problem.typicalErrorSteps);
+  const [steps, setSteps] = useState<MathStep[]>([
+    { id: 'step-init', stepNumber: 1, expression: problem.equation, annotation: 'Ecuación inicial' }
+  ]);
   const [strokes, setStrokes] = useState<CanvasStroke[]>([]);
   const [activeTab, setActiveTab] = useState<'both' | 'canvas' | 'steps'>('both');
   const [showHint, setShowHint] = useState<boolean>(false);
@@ -111,15 +111,6 @@ export const Screen3Whiteboard: React.FC<Screen3WhiteboardProps> = ({
                 Pasos
               </button>
             </div>
-
-            {/* Quick Pitch Loader */}
-            <button
-              type="button"
-              onClick={onQuickLoadPitch}
-              className="px-2.5 py-1 rounded-lg bg-[#e7deff] text-[#4e4184] hover:bg-[#cbbeff] border border-[#625499]/40 font-mono text-[10px] font-bold shadow-xs active:scale-95"
-            >
-              Cargar Camila (Pitch)
-            </button>
           </div>
         </div>
 

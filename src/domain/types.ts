@@ -140,3 +140,40 @@ export interface ProblemTemplate {
   typicalErrorSteps: MathStep[];
   correctSteps: MathStep[];
 }
+
+export interface UserProgressMetrics {
+  streakDays: number;
+  points: number;
+  completedExercisesCount: number;
+  completedNodes: number;
+  unlockedBadgeIds: string[];
+  practiceMinutesByDay: Record<string, number>;
+  linkedTeacher: string | null;
+  teacherNotes: Array<{
+    id: string;
+    date: string;
+    teacherName: string;
+    teacherRole: string;
+    note: string;
+    assignedCount: number;
+  }>;
+}
+
+export const INITIAL_USER_METRICS: UserProgressMetrics = {
+  streakDays: 0,
+  points: 0,
+  completedExercisesCount: 0,
+  completedNodes: 0,
+  unlockedBadgeIds: [],
+  practiceMinutesByDay: {
+    lun: 0,
+    mar: 0,
+    mie: 0,
+    jue: 0,
+    vie: 0,
+    sab: 0,
+    dom: 0
+  },
+  linkedTeacher: null,
+  teacherNotes: []
+};

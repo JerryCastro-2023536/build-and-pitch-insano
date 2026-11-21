@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { DiagnosticResult, StudentProfile } from '../domain/types';
+import { balamRepository } from '../persistence/balamRepository';
 import { TextileRibbon } from '../components/common/TextileRibbon';
 
 export interface Screen5RemediationRouteProps {
@@ -18,8 +19,12 @@ export const Screen5RemediationRoute: React.FC<Screen5RemediationRouteProps> = (
   onGoToWhiteboard
 }) => {
   const exercises = diagnostic.remediationExercises || [];
-  const completedCount = exercises.filter((e) => e.completed).length;
-  const progressPercent = Math.min(100, Math.max(20, Math.round(((completedCount + 1) / 5) * 100)));
+  const [completedExercises, setCompletedExercises] = useState<number[]>(() => {
+    return exercises.map((e, idx) => (e.completed ? idx : -1)).filter((idx) => idx !== -1);
+  });
+  const completedCount = completedExercises.length;
+  const totalNodes = exercises.length || 5;
+  const progressPercent = totalNodes > 0 ? Math.min(100, Math.round((completedCount / totalNodes) * 100)) : 0;
 
   // Modals state
   const [modalRevisionOpen, setModalRevisionOpen] = useState(false);
@@ -50,6 +55,17 @@ export const Screen5RemediationRoute: React.FC<Screen5RemediationRouteProps> = (
     setSelectedFinalAnswer(val);
     if (val === 32) {
       setSimFeedback('¡Nudo apretado con éxito! 2 × 16 = 32.');
+      if (!completedExercises.includes(1)) {
+        const nextCompleted = [...completedExercises, 1];
+        setCompletedExercises(nextCompleted);
+        const metrics = balamRepository.getUserMetrics();
+        balamRepository.saveUserMetrics({
+          ...metrics,
+          completedExercisesCount: metrics.completedExercisesCount + 1,
+          completedNodes: Math.max(metrics.completedNodes, nextCompleted.length),
+          points: metrics.points + 20
+        });
+      }
     } else {
       setSimFeedback('Revisa el producto: 2 × 16.');
     }
@@ -64,7 +80,7 @@ export const Screen5RemediationRoute: React.FC<Screen5RemediationRouteProps> = (
             Hilo de Refuerzo Activo
           </span>
           <span className="w-2 h-2 rounded-full bg-[#b90c55] animate-ping" />
-          <span className="font-mono text-xs text-[#524534]">Nudo 2 en telar</span>
+          <span className="font-mono text-xs text-[#524534]">Nudo {Math.min(totalNodes, completedCount + 1)} en telar</span>
         </div>
 
         <h1 className="font-headline font-bold text-2xl text-[#201b0d] tracking-tight">
@@ -81,7 +97,7 @@ export const Screen5RemediationRoute: React.FC<Screen5RemediationRouteProps> = (
               <span className="material-symbols-outlined text-[#835500] text-base">texture</span>
               Avance del telar
             </span>
-            <span className="text-[#835500]">{completedCount + 1} de 5 nudos ({progressPercent}%)</span>
+            <span className="text-[#835500]">{completedCount} de {totalNodes} nudos ({progressPercent}%)</span>
           </div>
 
           <div className="w-full h-3 bg-[#ece2ca] rounded-full overflow-hidden flex items-center p-0.5 border border-[#201b0d]/20">
@@ -230,7 +246,7 @@ export const Screen5RemediationRoute: React.FC<Screen5RemediationRouteProps> = (
               Desafío de Maestría: El nudo perfecto
             </h2>
             <p className="font-sans text-xs text-[#524534]">
-              Ecuaciones cuadráticas completas para sellar tu salto de dominio al 94%.
+              Ecuaciones cuadráticas completas para sellar tu dominio y consolidar la base matemática.
             </p>
           </div>
         </article>

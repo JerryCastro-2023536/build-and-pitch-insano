@@ -16,7 +16,7 @@ export class LocalStorageAdapter {
     try {
       const storedVersion = localStorage.getItem(STORAGE_KEYS.SCHEMA_VERSION);
       if (!storedVersion || parseInt(storedVersion, 10) < BALAM_SCHEMA_VERSION) {
-        // Safe migration: Clear old legacy v1 keys without touching non-balam data
+        // Safe migration: Clear old legacy keys without touching non-balam data
         this.clearPrefix('balam_');
         localStorage.setItem(STORAGE_KEYS.SCHEMA_VERSION, BALAM_SCHEMA_VERSION.toString());
       }

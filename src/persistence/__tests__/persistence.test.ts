@@ -42,7 +42,7 @@ describe('LocalStorageAdapter Persistence Hardening', () => {
   });
 
   it('clears only keys matching the balam_ prefix, preserving foreign keys', () => {
-    localStorage.setItem('balam_user_1', JSON.stringify({ name: 'Camila' }));
+    localStorage.setItem('balam_user_1', JSON.stringify({ name: 'EstudianteTest' }));
     localStorage.setItem('balam_score_2', JSON.stringify(94));
     localStorage.setItem('foreign_app_token', 'secure_secret_123');
     localStorage.setItem('other_analytics_id', '9988');

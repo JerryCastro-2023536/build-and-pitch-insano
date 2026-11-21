@@ -1,5 +1,6 @@
 import React, { useEffect, useRef } from 'react';
 import { StudentProfile } from '../domain/types';
+import { balamRepository } from '../persistence/balamRepository';
 import { BalamJaguarAvatar } from '../components/common/BalamJaguarAvatar';
 import { TextileRibbon } from '../components/common/TextileRibbon';
 
@@ -16,7 +17,15 @@ export const Screen9SuccessRepaired: React.FC<Screen9SuccessRepairedProps> = ({
   onGoToTeacherView,
   onGoToHome
 }) => {
-  const studentName = profile?.name || 'Camila Morales';
+  const studentName = profile?.name || 'Estudiante';
+  const diagnostic = balamRepository.getDiagnostic();
+  const metrics = balamRepository.getUserMetrics();
+  const session = balamRepository.getCurrentSession();
+
+  const initialMastery = diagnostic?.adultSummary?.conceptMastery?.[0]?.masteryPercentage ?? (metrics.completedExercisesCount > 0 ? 40 : 0);
+  const currentMastery = Math.min(100, Math.max(initialMastery, 90 + Math.min(10, metrics.completedNodes * 2)));
+  const pointsDelta = Math.max(0, currentMastery - initialMastery);
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
 
   // Textile-themed high-performance confetti canvas
@@ -130,24 +139,26 @@ export const Screen9SuccessRepaired: React.FC<Screen9SuccessRepairedProps> = ({
               ¡Felicidades, {studentName}!
             </h1>
             <p className="font-sans text-xs sm:text-sm text-on-surface-variant mt-2 leading-relaxed max-w-sm mx-auto">
-              Has dominado la regla de <strong className="text-primary font-bold">Jerarquía de Operaciones</strong>. Tu razonamiento ya no confunde los factores exteriores con los exponentes.
+              Has dominado la regla de <strong className="text-primary font-bold">{diagnostic?.visualFeedback?.ruleBroken || 'Jerarquía de Operaciones'}</strong>. Tu razonamiento ahora aplica los pasos con orden y consistencia.
             </p>
           </div>
 
-          {/* Mastery Jump Highlight (Pitch 42% -> 94%) */}
+          {/* Mastery Jump Highlight */}
           <div className="w-full bg-surface-container-low rounded-2xl p-4 border border-outline-variant/30 flex items-center justify-around">
             <div className="flex flex-col items-center">
               <span className="font-mono text-[10px] uppercase font-bold text-red-600">Dominio Inicial</span>
-              <span className="font-mono text-2xl font-bold text-red-600">42%</span>
-              <span className="font-sans text-[10px] text-on-surface-variant">Hilo flojo (PEMDAS)</span>
+              <span className="font-mono text-2xl font-bold text-red-600">{initialMastery}%</span>
+              <span className="font-sans text-[10px] text-on-surface-variant">
+                {diagnostic ? 'Con debilidad aislada' : 'Punto de partida'}
+              </span>
             </div>
             <div className="flex flex-col items-center text-primary">
               <span className="material-symbols-outlined text-[24px] animate-pulse">arrow_forward</span>
-              <span className="font-mono text-[9px] uppercase font-bold text-primary">+52 pts</span>
+              <span className="font-mono text-[9px] uppercase font-bold text-primary">+{pointsDelta} pts</span>
             </div>
             <div className="flex flex-col items-center">
               <span className="font-mono text-[10px] uppercase font-bold text-emerald-600">Dominio Hoy</span>
-              <span className="font-mono text-2xl font-bold text-emerald-600">94%</span>
+              <span className="font-mono text-2xl font-bold text-emerald-600">{currentMastery}%</span>
               <span className="font-sans text-[10px] text-emerald-700 font-bold">Afianzado</span>
             </div>
           </div>
@@ -160,16 +171,20 @@ export const Screen9SuccessRepaired: React.FC<Screen9SuccessRepairedProps> = ({
 
             {/* Before */}
             <div className="p-2.5 rounded-xl bg-red-50 border border-red-200 text-red-900 flex items-center justify-between">
-              <span className="font-mono text-xs">Antes: 2(x + 3)² = 32 → (2x + 6)² = 32</span>
-              <span className="font-mono text-[10px] text-red-700 font-bold bg-white px-1.5 py-0.5 rounded">
-                Violaba PEMDAS
+              <span className="font-mono text-xs truncate max-w-[280px]">
+                Antes: {session?.steps?.[session.steps.length - 1]?.expression || '2(x + 3)² = 32 → (2x + 6)² = 32'}
+              </span>
+              <span className="font-mono text-[10px] text-red-700 font-bold bg-white px-1.5 py-0.5 rounded shrink-0">
+                {diagnostic?.visualFeedback?.ruleBroken || 'Violaba Jerarquía'}
               </span>
             </div>
 
             {/* After */}
             <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-300 text-emerald-950 flex items-center justify-between font-bold">
-              <span className="font-mono text-xs">Ahora: 2(x + 3)² = 32 → (x + 3)² = 16 → x = 1, -7</span>
-              <span className="font-mono text-[10px] text-emerald-800 bg-white px-1.5 py-0.5 rounded font-bold">
+              <span className="font-mono text-xs truncate max-w-[280px]">
+                Ahora: {session?.initialEquation ? `${session.initialEquation} → Solución verificada` : '2(x + 3)² = 32 → (x + 3)² = 16 → x = 1, -7'}
+              </span>
+              <span className="font-mono text-[10px] text-emerald-800 bg-white px-1.5 py-0.5 rounded font-bold shrink-0">
                 Impecable
               </span>
             </div>

@@ -82,7 +82,7 @@ export function evaluateOffline(input: PedagogicalAnalysisInput): DiagnosticResu
       break;
     }
 
-    // Pattern 1: Camila's breakdown: 2(x + 3)^2 -> (2x + 6)^2
+    // Pattern 1: Distribution before exponent: 2(x + 3)^2 -> (2x + 6)^2
     // Distributing a multiplier inside a parenthesized exponent
     if (
       expr.includes('(2x+6)^2') || 

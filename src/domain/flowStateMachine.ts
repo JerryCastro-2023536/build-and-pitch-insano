@@ -26,14 +26,14 @@ export interface FlowState {
 export type FlowAction =
   | { type: 'NAVIGATE_TO'; screenId: ScreenId }
   | { type: 'REGISTER_STUDENT'; profile: StudentProfile }
-  | { type: 'LOAD_PITCH_SCENARIO'; payload: { profile: StudentProfile; session: WhiteboardSession; diagnostic: DiagnosticResult } }
   | { type: 'RESET_DEMO' }
   | { type: 'START_ANALYSIS' }
   | { type: 'ANALYSIS_COMPLETED'; payload: { session: WhiteboardSession; diagnostic: DiagnosticResult } }
   | { type: 'ANALYSIS_FAILED' }
   | { type: 'SELECT_EXERCISE'; index: number }
   | { type: 'COMPLETE_EXERCISE'; exerciseIndex: number }
-  | { type: 'REPAIR_PITCH_PROBLEM' };
+  | { type: 'REPAIR_PITCH_PROBLEM' }
+  | { type: 'HYDRATE_STATE'; payload: { profile: StudentProfile | null; session: WhiteboardSession | null; diagnostic: DiagnosticResult | null } };
 
 /**
  * Navigation Guards: ensures user cannot jump to screens requiring prior data
@@ -71,18 +71,6 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
         ...state,
         profile: action.profile,
         currentScreenId: 2 // Advance to Mi Camino Hub
-      };
-    }
-
-    case 'LOAD_PITCH_SCENARIO': {
-      return {
-        ...state,
-        profile: action.payload.profile,
-        session: action.payload.session,
-        diagnostic: action.payload.diagnostic,
-        currentExerciseIndex: 0,
-        isAnalyzing: false,
-        currentScreenId: 3 // Whiteboard ready for immediate live demo
       };
     }
 
@@ -144,6 +132,16 @@ export function flowReducer(state: FlowState, action: FlowAction): FlowState {
           ...state.diagnostic,
           remediationExercises: updatedExercises
         }
+      };
+    }
+
+    case 'HYDRATE_STATE': {
+      return {
+        ...state,
+        profile: action.payload.profile,
+        session: action.payload.session,
+        diagnostic: action.payload.diagnostic,
+        currentScreenId: action.payload.profile ? 2 : 1
       };
     }
 

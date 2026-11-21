@@ -83,7 +83,7 @@ export const Screen4ProcessFeedback: React.FC<Screen4ProcessFeedbackProps> = ({
           </span>
         </div>
         <span className="bg-[#f8edd5] border border-[#d7c3ae] text-[#201b0d] px-2.5 py-0.5 rounded-md font-mono text-[11px] font-bold">
-          {session?.initialEquation || '2(x+3)² - 8 = 24'}
+          {session?.initialEquation || 'Ecuación evaluada'}
         </span>
       </div>
 
@@ -224,19 +224,37 @@ export const Screen4ProcessFeedback: React.FC<Screen4ProcessFeedbackProps> = ({
             </div>
 
             <div className="flex flex-col gap-2 text-xs font-mono">
-              <div className="flex items-center gap-2">
-                <span className="text-[#857462] w-4 font-bold">1.</span>
-                <span className="text-[#201b0d]">2(x + 3)² - 8 = 24</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[#857462] w-4 font-bold">2.</span>
-                <span className="text-[#201b0d]">2(x + 3)² = 32</span>
-              </div>
-              <div className="flex items-center gap-2 bg-[#ffdad6]/60 p-1.5 rounded-lg border border-[#ba1a1a]/30">
-                <span className="text-[#ba1a1a] w-4 font-bold">3.</span>
-                <span className="text-[#ba1a1a] font-bold">(2x + 6)² = 32</span>
-                <span className="text-[10px] text-[#93000a] font-sans ml-auto">← Multiplicaste la base con exponente</span>
-              </div>
+              {session?.steps && session.steps.length > 0 ? (
+                session.steps.map((step, idx) => {
+                  const isErrorStep = diagnostic.errorStepIndex === idx || step.isIncorrectStep;
+                  return (
+                    <div
+                      key={step.id || idx}
+                      className={`flex items-center gap-2 ${
+                        isErrorStep
+                          ? 'bg-[#ffdad6]/60 p-1.5 rounded-lg border border-[#ba1a1a]/30'
+                          : ''
+                      }`}
+                    >
+                      <span className={`w-4 font-bold ${isErrorStep ? 'text-[#ba1a1a]' : 'text-[#857462]'}`}>
+                        {idx + 1}.
+                      </span>
+                      <span className={`${isErrorStep ? 'text-[#ba1a1a] font-bold' : 'text-[#201b0d]'}`}>
+                        {step.expression}
+                      </span>
+                      {isErrorStep && (
+                        <span className="text-[10px] text-[#93000a] font-sans ml-auto">
+                          ← {step.annotation || diagnostic.visualFeedback.calloutTitle || 'Aquí se rompió el razonamiento'}
+                        </span>
+                      )}
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="text-center py-2 text-xs text-[#524534]">
+                  No se registraron pasos en la sesión.
+                </div>
+              )}
             </div>
           </div>
         )}

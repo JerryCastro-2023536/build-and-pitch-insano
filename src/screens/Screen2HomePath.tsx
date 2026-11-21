@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { StudentProfile } from '../domain/types';
+import { balamRepository } from '../persistence/balamRepository';
 import { BalamJaguarAvatar } from '../components/common/BalamJaguarAvatar';
 import { TextileRibbon } from '../components/common/TextileRibbon';
 
@@ -16,8 +17,17 @@ export const Screen2HomePath: React.FC<Screen2HomePathProps> = ({
   onGoToProgress,
   onGoToTeacherView
 }) => {
-  const studentName = profile?.name || 'Camila Morales';
-  const gradeLabel = profile?.grade || '3ero Básico';
+  const studentName = profile?.name || 'Estudiante';
+  const gradeLabel = profile?.grade || 'Básico';
+
+  const metrics = balamRepository.getUserMetrics();
+  const diagnostic = balamRepository.getDiagnostic();
+  const session = balamRepository.getCurrentSession();
+  const hasErrorDiagnostic = Boolean(diagnostic && !diagnostic.isCorrect);
+
+  const completedNodes = metrics.completedNodes;
+  const cycleProgressPercent = Math.min(100, Math.round((completedNodes / 20) * 100));
+  const remCount = diagnostic?.remediationExercises?.filter((e) => e.completed).length || 0;
   
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeStationAccordion, setActiveStationAccordion] = useState<number | null>(1);
@@ -103,16 +113,18 @@ export const Screen2HomePath: React.FC<Screen2HomePathProps> = ({
 
         {/* Contador Racha de Rombos */}
         <div 
-          onClick={() => showToast('¡5 días continuos de tejido matemático!')}
+          onClick={() => showToast(metrics.streakDays > 0 ? `¡${metrics.streakDays} días continuos de tejido matemático!` : '¡Inicia hoy tu racha en la pizarra!')}
           className="flex flex-col items-end cursor-pointer active:scale-95 transition-transform"
         >
           <div className="flex items-center gap-1 bg-[#f2e7d0] px-2.5 py-1 rounded-full shadow-[2px_2px_0px_#201b0d] border border-[#201b0d]">
             <div className="w-3 h-3 bg-[#f5a623] rotate-45 flex items-center justify-center">
               <div className="w-1.5 h-1.5 bg-[#201b0d]" />
             </div>
-            <span className="font-mono text-xs font-bold text-[#201b0d]">5 DÍAS</span>
+            <span className="font-mono text-xs font-bold text-[#201b0d]">{metrics.streakDays} DÍAS</span>
           </div>
-          <span className="font-mono text-[9px] text-[#835500] font-bold mt-1">¡Racha de fuego!</span>
+          <span className="font-mono text-[9px] text-[#835500] font-bold mt-1">
+            {metrics.streakDays > 0 ? '¡Racha de fuego!' : 'Inicia tu racha hoy'}
+          </span>
         </div>
       </div>
 
@@ -125,16 +137,16 @@ export const Screen2HomePath: React.FC<Screen2HomePathProps> = ({
               Urdimbre del Ciclo
             </span>
           </div>
-          <span className="font-mono text-xs text-[#201b0d] font-bold">65% completado</span>
+          <span className="font-mono text-xs text-[#201b0d] font-bold">{cycleProgressPercent}% completado</span>
         </div>
 
         {/* Barra textil geométrica con rombos */}
         <div className="w-full bg-[#625499]/20 h-5 rounded-md p-0.5 relative flex items-center overflow-hidden border border-[#201b0d]/20 shadow-inner">
-          <div className="bg-[#625499] h-full rounded-sm flex items-center justify-end px-1 gap-1" style={{ width: '65%' }}>
-            <span className="w-2 h-2 bg-[#f5a623] rotate-45 shrink-0" />
-            <span className="w-2 h-2 bg-[#b90c55] rotate-45 shrink-0" />
-            <span className="w-2 h-2 bg-[#fff8f0] rotate-45 shrink-0" />
-            <span className="w-2 h-2 bg-[#f5a623] rotate-45 shrink-0" />
+          <div className="bg-[#625499] h-full rounded-sm flex items-center justify-end px-1 gap-1" style={{ width: `${cycleProgressPercent}%` }}>
+            {cycleProgressPercent > 10 && <span className="w-2 h-2 bg-[#f5a623] rotate-45 shrink-0" />}
+            {cycleProgressPercent > 25 && <span className="w-2 h-2 bg-[#b90c55] rotate-45 shrink-0" />}
+            {cycleProgressPercent > 50 && <span className="w-2 h-2 bg-[#fff8f0] rotate-45 shrink-0" />}
+            {cycleProgressPercent > 75 && <span className="w-2 h-2 bg-[#f5a623] rotate-45 shrink-0" />}
           </div>
           <div className="flex-1 flex justify-around opacity-40 px-2">
             <span className="w-1.5 h-1.5 bg-[#857462] rotate-45" />
@@ -145,57 +157,107 @@ export const Screen2HomePath: React.FC<Screen2HomePathProps> = ({
 
         <div className="flex justify-between items-center text-[#524534] text-xs">
           <span className="font-mono text-[10px]">Telar de Álgebra I</span>
-          <span className="font-mono text-[10px] text-[#835500] font-bold">13/20 Nudos tejidos</span>
+          <span className="font-mono text-[10px] text-[#835500] font-bold">{completedNodes}/20 Nudos tejidos</span>
         </div>
       </div>
 
-      {/* Hero Priority Card: Hilo Roto Detectado */}
+      {/* Hero Priority Card: Hilo Roto Detectado o Ruta Inicial */}
       <section className="bg-white rounded-2xl shadow-[4px_4px_0px_#201b0d] p-4 relative overflow-hidden flex flex-col gap-3 border-2 border-[#201b0d]">
         <TextileRibbon height="h-1.5" />
 
-        {/* Badge Hilo Roto */}
-        <div className="flex items-center justify-between pt-1">
-          <span className="inline-flex items-center gap-1.5 bg-[#ffdad6] text-[#93000a] px-2.5 py-1 rounded-md font-mono text-[10px] font-bold border border-[#ba1a1a]/30 shadow-[1px_1px_0px_#93000a]">
-            <span className="material-symbols-outlined text-sm animate-pulse">warning</span>
-            HILO ROTO DETECTADO
-          </span>
-          <span className="font-mono text-xs text-[#524534] font-bold">Prioridad 1</span>
-        </div>
+        {hasErrorDiagnostic && diagnostic ? (
+          <>
+            {/* Badge Hilo Roto */}
+            <div className="flex items-center justify-between pt-1">
+              <span className="inline-flex items-center gap-1.5 bg-[#ffdad6] text-[#93000a] px-2.5 py-1 rounded-md font-mono text-[10px] font-bold border border-[#ba1a1a]/30 shadow-[1px_1px_0px_#93000a]">
+                <span className="material-symbols-outlined text-sm animate-pulse">warning</span>
+                HILO ROTO DETECTADO
+              </span>
+              <span className="font-mono text-xs text-[#524534] font-bold">Prioridad 1</span>
+            </div>
 
-        {/* Título y Diagnóstico */}
-        <div>
-          <h2 className="font-headline font-bold text-lg text-[#201b0d]">Jerarquía de Operaciones</h2>
-          <div className="bg-[#f2e7d0] px-3 py-1.5 rounded-md mt-1 inline-block border border-[#d7c3ae]">
-            <p className="font-mono text-xs text-[#201b0d]">
-              Ejemplo: <span className="line-through decoration-[#b90c55] text-[#524534]">4 + 3 × 2 = 14</span>
-              <span className="text-[#b90c55] font-bold ml-1">→ 4 + 6 = 10</span>
-            </p>
-          </div>
-        </div>
+            {/* Título y Diagnóstico */}
+            <div>
+              <h2 className="font-headline font-bold text-lg text-[#201b0d]">
+                {diagnostic.visualFeedback?.foundationGuide?.conceptName || 'Jerarquía de Operaciones'}
+              </h2>
+              <div className="bg-[#f2e7d0] px-3 py-1.5 rounded-md mt-1 inline-block border border-[#d7c3ae]">
+                <p className="font-mono text-xs text-[#201b0d]">
+                  {diagnostic.visualFeedback?.ruleBroken || 'Jerarquía Operacional (PEMDAS)'}
+                </p>
+              </div>
+            </div>
 
-        {/* Mensaje Empático Local */}
-        <div className="flex items-start gap-2 bg-[#f8edd5] p-2.5 rounded-xl border border-[#d7c3ae]">
-          <span className="material-symbols-outlined text-[#835500] text-lg shrink-0 mt-0.5">sentiment_satisfied</span>
-          <p className="font-sans text-xs text-[#201b0d] leading-snug">
-            Aquí se enredó un hilo en tu última sesión: resolviste sumas antes de multiplicar. ¡No hay pena! Vamos a desenredarlo juntos paso a paso.
-          </p>
-        </div>
+            {/* Mensaje Empático Local */}
+            <div className="flex items-start gap-2 bg-[#f8edd5] p-2.5 rounded-xl border border-[#d7c3ae]">
+              <span className="material-symbols-outlined text-[#835500] text-lg shrink-0 mt-0.5">sentiment_satisfied</span>
+              <p className="font-sans text-xs text-[#201b0d] leading-snug">
+                {diagnostic.visualFeedback?.calloutDescription || 'Se detectó una alteración en la prioridad operacional. ¡Vamos a resolverlo juntos!'}
+              </p>
+            </div>
 
-        {/* CTA Primario Azafrán Solar */}
-        <button
-          type="button"
-          onClick={() => setIsModalOpen(true)}
-          className="w-full min-h-[48px] bg-[#f5a623] text-[#291800] rounded-xl font-mono text-xs font-bold uppercase tracking-wider shadow-[4px_4px_0px_#201b0d] border-2 border-[#201b0d] hover:brightness-105 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#201b0d] transition-all flex items-center justify-between px-4 cursor-pointer"
-        >
-          <div className="flex items-center gap-2">
-            <span className="material-symbols-outlined text-lg">gesture</span>
-            <span>Reparar base en Pizarra</span>
-          </div>
-          <div className="flex items-center gap-1 font-mono text-xs">
-            <span>5 pasos</span>
-            <span className="material-symbols-outlined text-base">arrow_forward</span>
-          </div>
-        </button>
+            {/* CTA Primario Azafrán Solar */}
+            <button
+              type="button"
+              onClick={() => setIsModalOpen(true)}
+              className="w-full min-h-[48px] bg-[#f5a623] text-[#291800] rounded-xl font-mono text-xs font-bold uppercase tracking-wider shadow-[4px_4px_0px_#201b0d] border-2 border-[#201b0d] hover:brightness-105 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#201b0d] transition-all flex items-center justify-between px-4 cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg">gesture</span>
+                <span>Reparar base en Pizarra</span>
+              </div>
+              <div className="flex items-center gap-1 font-mono text-xs">
+                <span>5 pasos</span>
+                <span className="material-symbols-outlined text-base">arrow_forward</span>
+              </div>
+            </button>
+          </>
+        ) : (
+          <>
+            {/* Badge Inicio Limpio */}
+            <div className="flex items-center justify-between pt-1">
+              <span className="inline-flex items-center gap-1.5 bg-[#e7deff] text-[#4e4184] px-2.5 py-1 rounded-md font-mono text-[10px] font-bold border border-[#625499]/30 shadow-[1px_1px_0px_#4e4184]">
+                <span className="material-symbols-outlined text-sm">explore</span>
+                RUTA DE INICIO
+              </span>
+              <span className="font-mono text-xs text-[#524534] font-bold">Paso 1</span>
+            </div>
+
+            {/* Título y Diagnóstico */}
+            <div>
+              <h2 className="font-headline font-bold text-lg text-[#201b0d]">Diagnóstico Inicial en Pizarra</h2>
+              <div className="bg-[#f2e7d0] px-3 py-1.5 rounded-md mt-1 inline-block border border-[#d7c3ae]">
+                <p className="font-mono text-xs text-[#201b0d]">
+                  Ecuación: <span className="text-[#835500] font-bold">{session?.initialEquation || '2(x + 3)² - 8 = 24'}</span>
+                </p>
+              </div>
+            </div>
+
+            {/* Mensaje Empático Local */}
+            <div className="flex items-start gap-2 bg-[#f8edd5] p-2.5 rounded-xl border border-[#d7c3ae]">
+              <span className="material-symbols-outlined text-[#835500] text-lg shrink-0 mt-0.5">sentiment_satisfied</span>
+              <p className="font-sans text-xs text-[#201b0d] leading-snug">
+                Aquí comienza tu tejido matemático. Resuelve el problema paso a paso en la pizarra y analizaremos tu razonamiento.
+              </p>
+            </div>
+
+            {/* CTA Primario Azafrán Solar */}
+            <button
+              type="button"
+              onClick={onGoToWhiteboard}
+              className="w-full min-h-[48px] bg-[#f5a623] text-[#291800] rounded-xl font-mono text-xs font-bold uppercase tracking-wider shadow-[4px_4px_0px_#201b0d] border-2 border-[#201b0d] hover:brightness-105 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#201b0d] transition-all flex items-center justify-between px-4 cursor-pointer"
+            >
+              <div className="flex items-center gap-2">
+                <span className="material-symbols-outlined text-lg">gesture</span>
+                <span>Comenzar en Pizarra</span>
+              </div>
+              <div className="flex items-center gap-1 font-mono text-xs">
+                <span>5 pasos</span>
+                <span className="material-symbols-outlined text-base">arrow_forward</span>
+              </div>
+            </button>
+          </>
+        )}
       </section>
 
       {/* Sección: Tu Sendero Tejido (Vertical Stepping Path) */}
@@ -234,7 +296,7 @@ export const Screen2HomePath: React.FC<Screen2HomePathProps> = ({
               <span className="font-mono text-[9px] bg-[#ffd9df] text-[#910040] px-2 py-0.5 rounded font-bold">
                 ESTACIÓN ACTIVA
               </span>
-              <span className="font-mono text-[10px] text-[#b90c55] font-bold">1/5 remediación</span>
+              <span className="font-mono text-[10px] text-[#b90c55] font-bold">{remCount}/5 remediación</span>
             </div>
 
             <div className="flex items-start justify-between">
@@ -293,7 +355,9 @@ export const Screen2HomePath: React.FC<Screen2HomePathProps> = ({
               <span className="font-mono text-[9px] bg-[#e7deff] text-[#4e4184] px-2 py-0.5 rounded font-bold">
                 PASO FIRME
               </span>
-              <span className="font-mono text-[10px] text-[#625499] font-bold">3/6 bordados</span>
+              <span className="font-mono text-[10px] text-[#625499] font-bold">
+                {completedNodes > 5 ? Math.min(6, completedNodes - 5) : 0}/6 bordados
+              </span>
             </div>
 
             <div className="flex items-start justify-between">
@@ -381,10 +445,10 @@ export const Screen2HomePath: React.FC<Screen2HomePathProps> = ({
           <div className="flex items-center gap-1.5">
             <span className="w-2 h-2 rounded-full bg-[#625499] inline-block animate-ping" />
             <span className="font-mono text-[10px]">
-              Sincronizado con: <strong className="text-[#201b0d]">Licda. Carmen Morales</strong>
+              Sincronizado con: <strong className="text-[#201b0d]">{metrics.linkedTeacher || 'Sin docente vinculado'}</strong>
             </span>
           </div>
-          <span className="font-mono text-[9px] text-[#625499] font-bold">INSO Central</span>
+          <span className="font-mono text-[9px] text-[#625499] font-bold">{profile?.school || 'Registro libre'}</span>
         </div>
       </section>
 
@@ -426,11 +490,11 @@ export const Screen2HomePath: React.FC<Screen2HomePathProps> = ({
               </div>
 
               {[
-                { num: 1, title: 'Paso 1: Paréntesis y Agrupación', desc: 'Identificar operaciones prioritarias.', done: true },
-                { num: 2, title: 'Paso 2: Potencias y Raíces', desc: 'Aislar exponentes antes de multiplicar.', done: false },
-                { num: 3, title: 'Paso 3: Multiplicación vs Suma (Foco)', desc: '¡Aquí ocurrió el enredo! 2(x+3)².', alert: true },
-                { num: 4, title: 'Paso 4: Despeje y Sumas Finales', desc: 'Resolver la igualdad paso a paso.', done: false },
-                { num: 5, title: 'Paso 5: Nudo de Prueba y Desbloqueo', desc: 'Verificar el dominio para abrir cuadráticas.', done: false }
+                { num: 1, title: 'Paso 1: Paréntesis y Agrupación', desc: 'Identificar operaciones prioritarias.', done: remCount >= 1 },
+                { num: 2, title: 'Paso 2: Potencias y Raíces', desc: 'Aislar exponentes antes de multiplicar.', done: remCount >= 2 },
+                { num: 3, title: 'Paso 3: Multiplicación vs Suma (Foco)', desc: 'Despejar respetando jerarquía PEMDAS.', alert: hasErrorDiagnostic && remCount < 3, done: remCount >= 3 },
+                { num: 4, title: 'Paso 4: Despeje y Sumas Finales', desc: 'Resolver la igualdad paso a paso.', done: remCount >= 4 },
+                { num: 5, title: 'Paso 5: Nudo de Prueba y Desbloqueo', desc: 'Verificar el dominio para abrir cuadráticas.', done: remCount >= 5 }
               ].map((step) => (
                 <div 
                   key={step.num}

@@ -4,23 +4,23 @@ import { PedagogicalAnalyzerService } from '../PedagogicalAnalyzerService';
 import { CURRICULUM_PROBLEMS } from '../../domain/curriculum';
 
 describe('Balam Pedagogical Evaluator Engine', () => {
-  it('correctly diagnoses Camila Morales pitch scenario (Error at Step 3: PEMDAS)', () => {
-    const camilaProblem = CURRICULUM_PROBLEMS[0];
+  it('correctly diagnoses multi-step quadratic scenario (Error at Step 3: PEMDAS)', () => {
+    const quadraticProblem = CURRICULUM_PROBLEMS[0];
     const result = evaluateOffline({
-      problemStatement: camilaProblem.statement,
-      initialEquation: camilaProblem.equation,
-      topic: camilaProblem.topic,
-      steps: camilaProblem.typicalErrorSteps,
+      problemStatement: quadraticProblem.statement,
+      initialEquation: quadraticProblem.equation,
+      topic: quadraticProblem.topic,
+      steps: quadraticProblem.typicalErrorSteps,
       studentProfile: {
-        id: 'camila-01',
-        name: 'Camila Morales',
+        id: 'student-01',
+        name: 'Sofía Martínez',
         age: 14,
         grade: '3ero Básico',
         school: 'Instituto Experimental',
         department: 'Guatemala',
         selectedTopic: 'ecuacion_cuadratica',
         createdAt: '2026-01-01',
-        avatarSeed: 'camila'
+        avatarSeed: 'sofia'
       }
     });
 
@@ -30,17 +30,17 @@ describe('Balam Pedagogical Evaluator Engine', () => {
     expect(result.visualFeedback.ruleBroken).toContain('Jerarquía');
     expect(result.remediationExercises.length).toBeGreaterThan(0);
     expect(result.adultSummary).toBeDefined();
-    expect(result.adultSummary.studentName).toBe('Camila Morales');
+    expect(result.adultSummary.studentName).toBe('Sofía Martínez');
     expect(result.adultSummary.conceptMastery.some(c => c.conceptId === 'jerarquia_operaciones')).toBe(true);
   });
 
   it('validates a completely correct multi-step solution without errors', () => {
-    const camilaProblem = CURRICULUM_PROBLEMS[0];
+    const quadraticProblem = CURRICULUM_PROBLEMS[0];
     const result = evaluateOffline({
-      problemStatement: camilaProblem.statement,
-      initialEquation: camilaProblem.equation,
-      topic: camilaProblem.topic,
-      steps: camilaProblem.correctSteps,
+      problemStatement: quadraticProblem.statement,
+      initialEquation: quadraticProblem.equation,
+      topic: quadraticProblem.topic,
+      steps: quadraticProblem.correctSteps,
       studentProfile: null
     });
 
