@@ -1,10 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { MathStep, CanvasStroke, StudentProfile } from '../domain/types';
 import { CURRICULUM_PROBLEMS } from '../domain/curriculum';
 import { DrawingCanvas } from '../components/whiteboard/DrawingCanvas';
 import { StepByStepEditor } from '../components/whiteboard/StepByStepEditor';
 import { MathKeypad } from '../components/whiteboard/MathKeypad';
 import { TextileRibbon } from '../components/common/TextileRibbon';
+
+export const cleanMathExpression = (expr: string): string => {
+  if (!expr) return '';
+  return expr
+    .replace(/\\times/g, '×')
+    .replace(/\\div/g, '÷')
+    .replace(/\\cdot/g, '·')
+    .replace(/\\sqrt\{([^}]+)\}/g, '√($1)')
+    .replace(/\\sqrt/g, '√')
+    .replace(/\\pm/g, '±')
+    .replace(/\\left\(/g, '(')
+    .replace(/\\right\)/g, ')');
+};
 
 export interface Screen3WhiteboardProps {
   profile: StudentProfile | null;
@@ -21,18 +34,32 @@ export const Screen3Whiteboard: React.FC<Screen3WhiteboardProps> = ({
   const problem = CURRICULUM_PROBLEMS.find((p) => p.topic === topic) || CURRICULUM_PROBLEMS[0];
 
   const [steps, setSteps] = useState<MathStep[]>([
-    { id: 'step-init', stepNumber: 1, expression: problem.equation, annotation: 'Ecuación inicial' }
+    { id: 'step-init', stepNumber: 1, expression: cleanMathExpression(problem.equation), annotation: 'Ecuación inicial' }
   ]);
   const [strokes, setStrokes] = useState<CanvasStroke[]>([]);
   const [activeTab, setActiveTab] = useState<'both' | 'canvas' | 'steps'>('both');
   const [showHint, setShowHint] = useState<boolean>(false);
 
+  useEffect(() => {
+    setSteps((currentSteps) => {
+      if (currentSteps.length === 1 && currentSteps[0].id === 'step-init') {
+        return [
+          { id: 'step-init', stepNumber: 1, expression: cleanMathExpression(problem.equation), annotation: 'Ecuación inicial' }
+        ];
+      }
+      return currentSteps.map((s) => ({
+        ...s,
+        expression: cleanMathExpression(s.expression)
+      }));
+    });
+  }, [problem.id, problem.equation]);
+
   const handleSimulateError = () => {
-    setSteps(problem.typicalErrorSteps);
+    setSteps(problem.typicalErrorSteps.map((s) => ({ ...s, expression: cleanMathExpression(s.expression) })));
   };
 
   const handleSimulateCorrect = () => {
-    setSteps(problem.correctSteps);
+    setSteps(problem.correctSteps.map((s) => ({ ...s, expression: cleanMathExpression(s.expression) })));
   };
 
   const handleInsertSymbol = (symbol: string) => {
@@ -124,8 +151,9 @@ export const Screen3Whiteboard: React.FC<Screen3WhiteboardProps> = ({
 
           <div className="flex items-center gap-2">
             {/* Formula Pill */}
-            <div className="bg-[#fef3db] border-2 border-[#201b0d] px-3.5 py-1.5 rounded-xl font-mono text-base font-bold text-[#201b0d] shadow-[2px_2px_0px_#201b0d]">
-              {problem.equation}
+            <div className="bg-[#fef3db] border-2 border-[#201b0d] px-3.5 py-1.5 rounded-xl font-mono text-base font-bold text-[#201b0d] shadow-[2px_2px_0px_#201b0d] flex items-center gap-2">
+              <span className="material-symbols-outlined text-base text-[#835500]">functions</span>
+              <span>{cleanMathExpression(problem.equation)}</span>
             </div>
 
             {/* Hint Button */}
@@ -208,8 +236,11 @@ export const Screen3Whiteboard: React.FC<Screen3WhiteboardProps> = ({
       </div>
 
       {/* Diferenciador Pedagógico */}
-      <footer className="p-3 rounded-xl bg-[#f8edd5] border border-[#d7c3ae] text-center text-xs text-[#524534] font-sans">
-        💡 <strong className="text-[#201b0d]">Diferenciador Pedagógico Balam:</strong> No es un chatbot conversacional que resuelve la tarea. Analiza el proceso deductivo paso a paso para aislar la base débil exacta.
+      <footer className="p-3 rounded-xl bg-[#f8edd5] border border-[#d7c3ae] text-center text-xs text-[#524534] font-sans flex items-center justify-center gap-2">
+        <span className="material-symbols-outlined text-base text-[#835500]">lightbulb</span>
+        <span>
+          <strong className="text-[#201b0d]">Diferenciador Pedagógico Balam:</strong> No es un chatbot conversacional que resuelve la tarea. Analiza el proceso deductivo paso a paso para aislar la base débil exacta.
+        </span>
       </footer>
     </div>
   );
