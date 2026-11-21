@@ -1,6 +1,5 @@
 import React from 'react';
 import { MathStep } from '../../domain/types';
-import { Icons } from '../common/Icons';
 
 export interface StepByStepEditorProps {
   steps: MathStep[];
@@ -52,33 +51,33 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
   };
 
   return (
-    <div className="bg-slate-900 rounded-xl border border-slate-800 p-4 shadow-xl flex flex-col justify-between h-full">
+    <div className="bg-white rounded-2xl border-2 border-[#201b0d] p-4 shadow-[4px_4px_0px_#201b0d] flex flex-col justify-between h-full">
       <div>
         {/* Header with Pitch Fast Buttons */}
-        <div className="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-slate-800 gap-2">
+        <div className="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-[#ece2ca] gap-2">
           <div>
-            <h3 className="font-bold text-white text-sm flex items-center space-x-1.5">
-              <span>Desglose Paso a Paso del Estudiante</span>
+            <h3 className="font-headline font-bold text-[#201b0d] text-base flex items-center gap-1.5">
+              <span>Desglose Paso a Paso</span>
             </h3>
-            <p className="text-[11px] text-slate-400">
-              Registra cada transformación matemática para el análisis del proceso.
+            <p className="font-sans text-xs text-[#524534]">
+              Registra cada transformación matemática para aislar vacíos conceptuales.
             </p>
           </div>
 
-          {/* Live pitch quick simulation buttons */}
-          <div className="flex items-center space-x-1.5">
+          {/* Quick simulation buttons for Pitch */}
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={onSimulateError}
-              className="px-2.5 py-1 rounded bg-rose-500/20 hover:bg-rose-500/30 text-rose-300 border border-rose-500/40 text-[11px] font-semibold transition"
-              title="Cargar error de jerarquía en paso 3 para la demo"
+              className="px-2.5 py-1 rounded-lg bg-[#ffd9df] hover:bg-[#ffb1c2] text-[#910040] border border-[#b90c55]/40 font-mono text-[10px] font-bold transition-all shadow-xs active:scale-95"
+              title="Simular caso de Camila Morales: error de jerarquía en paso 3"
             >
-              Simular Error Típico
+              Simular Error (Paso 3)
             </button>
             <button
               type="button"
               onClick={onSimulateCorrect}
-              className="px-2.5 py-1 rounded bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[11px] font-semibold transition"
+              className="px-2.5 py-1 rounded-lg bg-[#e6f7f5] hover:bg-[#bbf0ea] text-[#0D9488] border border-[#0D9488]/40 font-mono text-[10px] font-bold transition-all shadow-xs active:scale-95"
               title="Cargar procedimiento 100% correcto"
             >
               Cargar Solución Correcta
@@ -87,36 +86,34 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
         </div>
 
         {/* Step list */}
-        <div className="space-y-2.5 max-h-[380px] overflow-y-auto pr-1">
+        <div className="space-y-2.5 max-h-[360px] overflow-y-auto pr-1">
           {steps.map((step, index) => {
             const isHighlighted = highlightErrorIndex === index;
             return (
               <div
                 key={step.id || index}
-                className={`p-2.5 rounded-lg border transition ${
-                  isHighlighted
-                    ? 'bg-rose-950/40 border-rose-500 shadow-md shadow-rose-950 ring-1 ring-rose-500/80 animate-pulse'
-                    : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                }`}
+                className={`p-2.5 rounded-xl border-2 transition-all ${isHighlighted
+                    ? 'bg-[#ffdad6]/50 border-[#ba1a1a] shadow-[2px_2px_0px_#ba1a1a]'
+                    : 'bg-[#fef3db] border-[#d7c3ae] hover:border-[#201b0d]'
+                  }`}
               >
                 <div className="flex items-center justify-between mb-1.5">
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center gap-2">
                     <span
-                      className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                        isHighlighted
-                          ? 'bg-rose-600 text-white'
-                          : 'bg-indigo-600/30 text-indigo-300 border border-indigo-500/40'
-                      }`}
+                      className={`w-6 h-6 rounded-full flex items-center justify-center font-mono text-xs font-bold ${isHighlighted
+                          ? 'bg-[#ba1a1a] text-white'
+                          : 'bg-[#1e1548] text-white'
+                        }`}
                     >
                       {step.stepNumber}
                     </span>
-                    <span className="text-xs font-semibold text-slate-300">
+                    <span className="font-sans font-bold text-xs text-[#201b0d]">
                       Paso {step.stepNumber}
                     </span>
                   </div>
 
                   {isHighlighted && (
-                    <span className="text-[10px] font-bold uppercase tracking-wider text-rose-400 bg-rose-500/20 px-2 py-0.5 rounded border border-rose-500/30">
+                    <span className="font-mono text-[10px] font-bold uppercase tracking-wider text-[#93000a] bg-[#ffdad6] px-2 py-0.5 rounded border border-[#ba1a1a]/40">
                       Fallo de Razonamiento
                     </span>
                   )}
@@ -125,7 +122,7 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveStep(index)}
-                      className="text-slate-600 hover:text-rose-400 text-xs transition"
+                      className="text-[#857462] hover:text-[#ba1a1a] text-sm font-bold transition-colors p-1"
                       title="Eliminar paso"
                     >
                       ✕
@@ -140,7 +137,7 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
                       value={step.expression}
                       onChange={(e) => handleUpdateExpression(index, e.target.value)}
                       placeholder="Ej: 2(x + 3)^2 = 32"
-                      className="w-full bg-slate-900 border border-slate-800 text-indigo-300 font-mono text-xs rounded px-2.5 py-1.5 focus:border-indigo-500 focus:outline-none"
+                      className="w-full bg-white border border-[#d7c3ae] text-[#201b0d] font-mono text-xs rounded-lg px-2.5 py-1.5 focus:border-[#f5a623] focus:ring-1 focus:ring-[#f5a623] outline-none"
                     />
                   </div>
                   <div className="sm:col-span-5">
@@ -148,14 +145,14 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
                       type="text"
                       value={step.annotation}
                       onChange={(e) => handleUpdateAnnotation(index, e.target.value)}
-                      placeholder="Justificación / motivo"
-                      className="w-full bg-slate-900 border border-slate-800 text-slate-400 text-xs rounded px-2.5 py-1.5 focus:border-indigo-500 focus:outline-none"
+                      placeholder="Motivo / Justificación"
+                      className="w-full bg-white border border-[#d7c3ae] text-[#524534] font-sans text-xs rounded-lg px-2.5 py-1.5 focus:border-[#f5a623] outline-none"
                     />
                   </div>
                 </div>
 
                 {isHighlighted && step.errorReason && (
-                  <p className="mt-2 text-[11px] font-medium text-rose-300 bg-rose-950/60 p-1.5 rounded border border-rose-900/60">
+                  <p className="mt-2 font-sans text-xs font-medium text-[#93000a] bg-white p-2 rounded-lg border border-[#ba1a1a]/30">
                     ⚠️ {step.errorReason}
                   </p>
                 )}
@@ -168,30 +165,31 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
         <button
           type="button"
           onClick={handleAddStep}
-          className="mt-3 w-full py-1.5 rounded-lg border border-dashed border-slate-700 hover:border-indigo-500/60 hover:bg-indigo-500/5 text-slate-400 hover:text-indigo-300 text-xs font-medium transition flex items-center justify-center space-x-1"
+          className="mt-3 w-full py-2 rounded-xl border-2 border-dashed border-[#d7c3ae] hover:border-[#201b0d] hover:bg-[#fef3db] text-[#524534] font-mono text-xs font-bold transition-all flex items-center justify-center gap-1.5 cursor-pointer"
         >
-          <span>+ Agregar Siguiente Paso</span>
+          <span className="material-symbols-outlined text-base">add</span>
+          <span>Agregar Siguiente Paso</span>
         </button>
       </div>
 
       {/* Main Analysis Action Button */}
-      <div className="pt-4 mt-3 border-t border-slate-800">
+      <div className="pt-4 mt-3 border-t border-[#ece2ca]">
         <button
           type="button"
           onClick={onAnalyze}
           disabled={isAnalyzing}
-          className="w-full py-3 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-bold text-sm shadow-lg shadow-indigo-600/30 transition flex items-center justify-center space-x-2 disabled:opacity-50"
+          className="w-full min-h-[48px] py-3 rounded-xl bg-[#f5a623] text-[#201b0d] font-mono font-bold text-xs uppercase tracking-wider shadow-[4px_4px_0px_#201b0d] border-2 border-[#201b0d] hover:brightness-105 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#201b0d] transition-all flex items-center justify-center gap-2 disabled:opacity-50 cursor-pointer"
         >
           {isAnalyzing ? (
             <>
-              <Icons.RotateCcw className="w-4 h-4 animate-spin text-white" />
-              <span>Analizando Proceso Matemático...</span>
+              <span className="material-symbols-outlined text-base animate-spin">progress_activity</span>
+              <span>Analizando Razonamiento Matemático...</span>
             </>
           ) : (
             <>
-              <Icons.Sparkles className="w-4 h-4 text-amber-300" />
-              <span>Analizar Dónde se Rompió el Razonamiento</span>
-              <Icons.ArrowRight className="w-4 h-4" />
+              <span className="material-symbols-outlined text-base">task_alt</span>
+              <span>Verificar mi desarrollo</span>
+              <span className="material-symbols-outlined text-base">arrow_forward</span>
             </>
           )}
         </button>

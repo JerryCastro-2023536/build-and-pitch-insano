@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { StudentProfile, TopicType } from '../domain/types';
-import { Icons } from '../components/common/Icons';
+import { BalamJaguarAvatar } from '../components/common/BalamJaguarAvatar';
+import { TextileRibbon } from '../components/common/TextileRibbon';
 
 export interface Screen1RegistrationProps {
   initialProfile: StudentProfile | null;
@@ -13,233 +14,345 @@ export const Screen1Registration: React.FC<Screen1RegistrationProps> = ({
   onRegister,
   onQuickLoadPitch
 }) => {
-  const [name, setName] = useState(initialProfile?.name || '');
-  const [age, setAge] = useState<number>(initialProfile?.age || 14);
-  const [grade, setGrade] = useState(initialProfile?.grade || '3ero Básico');
-  const [school, setSchool] = useState(initialProfile?.school || 'Instituto Nacional Central');
-  const [department, setDepartment] = useState(initialProfile?.department || 'Guatemala');
+  const [name, setName] = useState(initialProfile?.name || 'David');
+  const [selectedCycle, setSelectedCycle] = useState<'basico' | 'diversificado'>('basico');
+  const [selectedAge, setSelectedAge] = useState<number>(initialProfile?.age || 14);
   const [selectedTopic, setSelectedTopic] = useState<TopicType>(
-    initialProfile?.selectedTopic || 'ecuacion_cuadratica'
+    initialProfile?.selectedTopic || 'jerarquia_operaciones'
   );
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [showConfetti, setShowConfetti] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!name.trim()) return;
-
-    const profile: StudentProfile = {
-      id: initialProfile?.id || `student-${Date.now()}`,
-      name: name.trim(),
-      age,
-      grade,
-      school,
-      department,
-      selectedTopic,
-      createdAt: initialProfile?.createdAt || new Date().toISOString(),
-      avatarSeed: name.toLowerCase().replace(/\s+/g, '')
-    };
-    onRegister(profile);
+  const GRADES_BY_CYCLE = {
+    basico: [
+      { age: 13, grade: '1º Básico' },
+      { age: 14, grade: '2º Básico' },
+      { age: 15, grade: '3º Básico' }
+    ],
+    diversificado: [
+      { age: 16, grade: '4º Bach' },
+      { age: 17, grade: '5º Bach' },
+      { age: 18, grade: '6º Perito' }
+    ]
   };
 
-  const TOPICS: { id: TopicType; title: string; desc: string; icon: string; badge: string }[] = [
-    {
-      id: 'ecuacion_cuadratica',
-      title: 'Ecuación Cuadrática',
-      desc: 'Resolución de ecuaciones de 2do grado por despeje, factorización y fórmula general.',
-      icon: '📐',
-      badge: '3ero Básico'
+  const currentGrade = GRADES_BY_CYCLE[selectedCycle].find(g => g.age === selectedAge)?.grade || '2º Básico';
+
+  const TOPIC_CONFIG: Record<TopicType, { title: string; expr: string; desc: string; tip: string }> = {
+    jerarquia_operaciones: {
+      title: 'Jerarquía de operaciones',
+      expr: '3 + 2 × 4²',
+      desc: '• PEMDAS ancestral',
+      tip: '¡Jerarquía es ideal para calentar motores hoy y afinar la mente!'
     },
-    {
-      id: 'potencias',
-      title: 'Potencias y Signos',
-      desc: 'Operaciones combinadas con exponentes, leyes de exponentes y jerarquía de signos.',
-      icon: '⚡',
-      badge: '2do Básico'
+    potencias: {
+      title: 'Potencias y Raíces',
+      expr: 'x³ • x²',
+      desc: '• Suma de exponentes',
+      tip: '¡Potencias y raíces refuerzan tu agilidad con leyes de exponentes!'
     },
-    {
-      id: 'jerarquia_operaciones',
-      title: 'Jerarquía de Operaciones (PEMDAS)',
-      desc: 'Prioridad de operadores: Paréntesis, Exponentes, Multiplicación, División, Sumas.',
-      icon: '🏛️',
-      badge: '1ro Básico'
+    ecuacion_cuadratica: {
+      title: 'Ecuación cuadrática',
+      expr: 'x² - 5x + 6 = 0',
+      desc: '• Factorización',
+      tip: '¡La ecuación cuadrática te abrirá el camino a parábolas y despeje maya!'
     }
-  ];
+  };
+
+  const handleStart = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!name.trim()) return;
+
+    setIsSubmitting(true);
+    setShowConfetti(true);
+
+    setTimeout(() => {
+      const profile: StudentProfile = {
+        id: initialProfile?.id || `student-${Date.now()}`,
+        name: name.trim(),
+        age: selectedAge,
+        grade: currentGrade,
+        school: initialProfile?.school || 'Instituto Nacional Experimental',
+        department: initialProfile?.department || 'Guatemala',
+        selectedTopic,
+        createdAt: initialProfile?.createdAt || new Date().toISOString(),
+        avatarSeed: name.toLowerCase().replace(/\s+/g, '')
+      };
+      onRegister(profile);
+    }, 700);
+  };
 
   return (
-    <div className="max-w-4xl mx-auto py-8 px-4">
-      {/* Hero Badge & Stitch Screen Indicator */}
-      <div className="flex flex-wrap items-center justify-between gap-2 mb-6">
-        <div className="flex items-center space-x-2">
-          <span className="px-3 py-1 rounded-full text-xs font-extrabold uppercase tracking-wider bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-            Pantalla 1 / 8 · Stitch ID: d6f04a15
-          </span>
-          <span className="text-xs text-slate-400">Paso 1 del Flujo Demo</span>
-        </div>
-
-        {/* 1-Click Pitch Scenario Button */}
+    <div className="w-full max-w-[420px] mx-auto px-4 py-4 sm:py-6 flex flex-col gap-4 relative">
+      {/* Quick Pitch Benchmark Banner */}
+      <div className="flex items-center justify-between gap-2 p-2 rounded-xl bg-[#f8edd5] border border-[#d7c3ae] text-xs">
+        <span className="font-mono text-[10px] text-[#835500] font-bold uppercase tracking-wider">
+          Pitch 1-Click: Camila Morales (14a)
+        </span>
         <button
           type="button"
           onClick={onQuickLoadPitch}
-          className="flex items-center space-x-2 px-3.5 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-bold transition shadow-sm"
+          className="px-2.5 py-1 rounded-lg bg-[#0D9488] text-white font-mono text-[11px] font-bold shadow-[2px_2px_0px_#201b0d] hover:brightness-105 active:scale-95 transition-all"
         >
-          <Icons.Sparkles className="w-4 h-4 text-emerald-400" />
-          <span>Cargar Escenario Pitch (Camila Morales - 14 años)</span>
+          Cargar Caso Estrella
         </button>
       </div>
 
-      {/* Main Card */}
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
-        {/* Glow */}
-        <div className="absolute top-0 right-0 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+      {/* Brand & Welcome Section */}
+      <header className="flex flex-col items-center text-center pt-1 pb-2">
+        <BalamJaguarAvatar size={76} animated className="mb-2 shadow-sm" />
+        <span className="font-mono text-[10px] uppercase px-2.5 py-0.5 rounded-full bg-[#625499] text-white tracking-widest mb-1.5 shadow-sm">
+          Aprende a tu Ritmo
+        </span>
+        <h1 className="font-headline text-2xl sm:text-3xl text-[#201b0d] font-bold tracking-tight mb-1">
+          ¡Hola! Bienvenido a Balam
+        </h1>
+        <p className="font-sans text-sm text-[#524534] max-w-xs leading-relaxed">
+          Aquí las matemáticas se tejen paso a paso, a tu propio ritmo.
+        </p>
 
-        {/* Header */}
-        <div className="mb-6">
-          <div className="flex items-center space-x-3 mb-2">
-            <Icons.BalamLogo className="w-10 h-10" />
-            <div>
-              <h1 className="text-2xl font-extrabold text-white tracking-tight">
-                Registro Inicial de Práctica
-              </h1>
-              <p className="text-xs sm:text-sm text-slate-400">
-                Plataforma de diagnóstico del razonamiento matemático para estudiantes de 13 a 15 años en Guatemala.
+        {/* Cinta Bordada Progress Bar */}
+        <div className="w-full max-w-xs mt-3 flex flex-col items-center">
+          <div className="w-full flex items-center justify-between relative px-4">
+            <div className="absolute left-8 right-8 top-1/2 -translate-y-1/2 h-1 bg-[#ece2ca] rounded-full z-0">
+              <div className="h-full bg-[#f5a623] rounded-full w-1/3 transition-all duration-500" />
+            </div>
+            {/* Step 1 (Active) */}
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-7 h-7 rotate-45 bg-[#f5a623] shadow-sm flex items-center justify-center scale-105">
+                <span className="-rotate-45 font-mono text-[11px] font-bold text-[#644000]">1</span>
+              </div>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[#201b0d] font-bold mt-2">
+                Quién eres
+              </span>
+            </div>
+            {/* Step 2 */}
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-6 h-6 rotate-45 bg-[#ece2ca] shadow-sm flex items-center justify-center">
+                <span className="-rotate-45 font-mono text-[10px] text-[#524534]">2</span>
+              </div>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[#524534] mt-2">
+                Tu tema
+              </span>
+            </div>
+            {/* Step 3 */}
+            <div className="relative z-10 flex flex-col items-center">
+              <div className="w-6 h-6 rotate-45 bg-[#ece2ca] shadow-sm flex items-center justify-center">
+                <span className="-rotate-45 font-mono text-[10px] text-[#524534]">3</span>
+              </div>
+              <span className="font-mono text-[9px] uppercase tracking-wider text-[#524534] mt-2">
+                Pizarra
+              </span>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* Interactive Registration Card */}
+      <section className="w-full bg-white rounded-2xl shadow-[4px_4px_0px_#201b0d] border-2 border-[#201b0d] overflow-hidden relative">
+        <TextileRibbon height="h-1.5" />
+
+        <form onSubmit={handleStart} className="p-4 sm:p-5 flex flex-col gap-4">
+          {/* Input Nombre */}
+          <div className="flex flex-col gap-1.5">
+            <label className="font-sans font-bold text-sm text-[#201b0d] flex items-center gap-1.5" htmlFor="student-name">
+              <span className="material-symbols-outlined text-[#f5a623] text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                person
+              </span>
+              ¿Cómo te llamas?
+            </label>
+            <div className="relative">
+              <input
+                id="student-name"
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Ej. Camila o David"
+                className="w-full h-12 px-3.5 bg-[#fef3db] text-[#201b0d] font-sans text-sm rounded-xl border border-[#d7c3ae] shadow-inner outline-none focus:ring-2 focus:ring-[#f5a623] focus:bg-white transition-all"
+                required
+              />
+              <span className="absolute right-3.5 top-1/2 -translate-y-1/2 text-[#b90c55] material-symbols-outlined text-xl">
+                auto_fix_high
+              </span>
+            </div>
+          </div>
+
+          {/* Selector Ciclo y Nivel Educativo */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="font-sans font-bold text-sm text-[#201b0d] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[#625499] text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  cake
+                </span>
+                ¿Cuántos años tienes?
+              </label>
+
+              {/* Botones de Ciclo */}
+              <div className="flex items-center gap-1 bg-[#f8edd5] p-0.5 rounded-lg border border-[#d7c3ae]">
+                <button
+                  type="button"
+                  onClick={() => setSelectedCycle('basico')}
+                  className={`text-[10px] font-mono font-bold px-2 py-1 rounded transition-all ${selectedCycle === 'basico'
+                      ? 'bg-[#625499] text-white shadow-xs'
+                      : 'text-[#524534] hover:text-[#201b0d]'
+                    }`}
+                >
+                  Básico
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSelectedCycle('diversificado')}
+                  className={`text-[10px] font-mono font-bold px-2 py-1 rounded transition-all ${selectedCycle === 'diversificado'
+                      ? 'bg-[#625499] text-white shadow-xs'
+                      : 'text-[#524534] hover:text-[#201b0d]'
+                    }`}
+                >
+                  Diversificado
+                </button>
+              </div>
+            </div>
+
+            {/* Botones de Grado / Edad */}
+            <div className="grid grid-cols-3 gap-2">
+              {GRADES_BY_CYCLE[selectedCycle].map((item) => {
+                const isSelected = selectedAge === item.age;
+                return (
+                  <button
+                    key={item.age}
+                    type="button"
+                    onClick={() => setSelectedAge(item.age)}
+                    className={`min-h-[48px] py-2 px-1 rounded-xl font-mono text-xs font-bold transition-all flex flex-col items-center justify-center cursor-pointer active:scale-95 ${isSelected
+                        ? 'bg-[#f5a623] text-[#291800] border-2 border-[#201b0d] shadow-[2px_2px_0px_#201b0d] -translate-y-0.5'
+                        : 'bg-[#f2e7d0]/70 text-[#201b0d] border border-[#d7c3ae] hover:bg-[#f8edd5]'
+                      }`}
+                  >
+                    <span className="flex items-center gap-1">
+                      {item.age} años
+                      {isSelected && <span className="w-1.5 h-1.5 rounded-full bg-[#b90c55]" />}
+                    </span>
+                    <span className="text-[10px] font-normal text-[#524534]">
+                      {item.grade}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Mascot Tip Notification Card */}
+          <div className="bg-[#e7deff]/40 rounded-xl p-3 flex items-start gap-3 border border-[#c0b1fd]">
+            <div className="w-8 h-8 rounded-full bg-[#625499] text-white flex-shrink-0 flex items-center justify-center shadow-xs">
+              <span className="material-symbols-outlined text-base" style={{ fontVariationSettings: "'FILL' 1" }}>
+                tips_and_updates
+              </span>
+            </div>
+            <div className="flex flex-col">
+              <div className="flex items-center gap-1.5 mb-0.5">
+                <span className="font-mono text-xs font-bold text-[#1e0c52]">Tip de Balam</span>
+                <span className="font-mono text-[8px] bg-[#b90c55] text-white px-1.5 py-0.5 rounded-full uppercase tracking-wider">
+                  Recomendado
+                </span>
+              </div>
+              <p className="font-sans text-xs text-[#524534] leading-snug">
+                {TOPIC_CONFIG[selectedTopic].tip}
               </p>
             </div>
           </div>
-        </div>
 
-        {/* Context PISA 2025 Guatemala Alert */}
-        <div className="bg-indigo-950/40 border border-indigo-800/60 rounded-xl p-4 mb-6 flex items-start space-x-3 text-xs text-indigo-200">
-          <Icons.School className="w-5 h-5 text-indigo-400 shrink-0 mt-0.5" />
-          <div className="leading-relaxed">
-            <span className="font-bold text-white">Contexto Nacional (PISA 2025): </span>
-            Solo el 8% de los jóvenes de 15 años en Guatemala alcanzan el nivel mínimo de matemáticas. 
-            Balam no juzga la respuesta final: observa el proceso en el whiteboard para detectar vacíos de 1ro básico que bloquean el aprendizaje actual.
-          </div>
-        </div>
-
-        {/* Form */}
-        <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            {/* Student Name */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                Nombre del Estudiante *
+          {/* Topic Choice Cards */}
+          <div className="flex flex-col gap-2">
+            <div className="flex items-center justify-between">
+              <label className="font-sans font-bold text-sm text-[#201b0d] flex items-center gap-1.5">
+                <span className="material-symbols-outlined text-[#b90c55] text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>
+                  category
+                </span>
+                ¿Qué quieres practicar hoy?
               </label>
-              <div className="relative">
-                <input
-                  type="text"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="Ej: Camila Morales"
-                  className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none transition pl-10"
-                />
-                <Icons.User className="w-4 h-4 text-slate-500 absolute left-3.5 top-3" />
-              </div>
+              <span className="font-mono text-[10px] text-[#b90c55] font-bold">1 seleccionado</span>
             </div>
 
-            {/* Age */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                Edad (Público Objetivo 13 a 15 años) *
-              </label>
-              <div className="grid grid-cols-3 gap-2">
-                {[13, 14, 15].map((a) => (
-                  <button
-                    key={a}
-                    type="button"
-                    onClick={() => setAge(a)}
-                    className={`py-2 rounded-xl text-sm font-bold border transition ${
-                      age === a
-                        ? 'bg-indigo-600 text-white border-indigo-500 shadow-md shadow-indigo-600/30'
-                        : 'bg-slate-950 text-slate-400 border-slate-800 hover:text-white'
-                    }`}
-                  >
-                    {a} años
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Grade */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                Grado Escolar
-              </label>
-              <select
-                value={grade}
-                onChange={(e) => setGrade(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none"
-              >
-                <option value="1ro Básico">1ro Básico</option>
-                <option value="2do Básico">2do Básico</option>
-                <option value="3ero Básico">3ero Básico</option>
-              </select>
-            </div>
-
-            {/* Department */}
-            <div>
-              <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-1.5">
-                Departamento (Guatemala)
-              </label>
-              <select
-                value={department}
-                onChange={(e) => setDepartment(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 text-white rounded-xl px-4 py-2.5 text-sm focus:border-indigo-500 focus:outline-none"
-              >
-                <option value="Guatemala">Guatemala</option>
-                <option value="Quetzaltenango">Quetzaltenango</option>
-                <option value="Sacatepéquez">Sacatepéquez</option>
-                <option value="Alta Verapaz">Alta Verapaz</option>
-                <option value="Chimaltenango">Chimaltenango</option>
-                <option value="Escuintla">Escuintla</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Topic Selection */}
-          <div>
-            <label className="block text-xs font-bold uppercase tracking-wider text-slate-300 mb-2">
-              Selecciona el Tema a Practicar (Temas del MVP) *
-            </label>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-              {TOPICS.map((t) => {
-                const isSelected = selectedTopic === t.id;
+            <div className="flex flex-col gap-2">
+              {(Object.keys(TOPIC_CONFIG) as TopicType[]).map((topicKey) => {
+                const config = TOPIC_CONFIG[topicKey];
+                const isSelected = selectedTopic === topicKey;
                 return (
                   <div
-                    key={t.id}
-                    onClick={() => setSelectedTopic(t.id)}
-                    className={`cursor-pointer rounded-xl p-4 border transition relative ${
-                      isSelected
-                        ? 'bg-indigo-950/50 border-indigo-500 shadow-lg shadow-indigo-950 ring-2 ring-indigo-500/50'
-                        : 'bg-slate-950/70 border-slate-800 hover:border-slate-700'
-                    }`}
+                    key={topicKey}
+                    onClick={() => setSelectedTopic(topicKey)}
+                    className={`p-3 rounded-xl cursor-pointer transition-all duration-200 border-2 ${isSelected
+                        ? 'bg-white border-[#f5a623] shadow-[3px_3px_0px_#201b0d] scale-[1.01]'
+                        : 'bg-[#fff8f0] border-[#d7c3ae] hover:bg-[#fef3db]'
+                      }`}
                   >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className="text-2xl">{t.icon}</span>
-                      <span className="text-[10px] font-bold px-2 py-0.5 rounded bg-slate-800 text-slate-300">
-                        {t.badge}
-                      </span>
+                    <div className="flex items-center justify-between">
+                      <div className="flex flex-col">
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-sans text-sm text-[#201b0d] font-bold">{config.title}</h3>
+                          {isSelected && (
+                            <span className="font-mono text-[9px] uppercase tracking-wider bg-[#f5a623] text-[#291800] font-bold px-1.5 py-0.5 rounded shadow-xs flex items-center gap-1">
+                              <span className="w-1.5 h-1.5 rounded-full bg-[#b90c55]" />
+                              Seleccionado
+                            </span>
+                          )}
+                        </div>
+                        <div className="mt-1 flex items-center gap-2">
+                          <span className="font-mono text-xs text-[#b90c55] font-bold">{config.expr}</span>
+                          <span className="text-[11px] text-[#524534] font-sans">{config.desc}</span>
+                        </div>
+                      </div>
+
+                      <div className={`w-6 h-6 rotate-45 flex items-center justify-center shrink-0 border ${isSelected ? 'bg-[#f5a623] border-[#201b0d]' : 'bg-[#f2e7d0] border-[#d7c3ae]'
+                        }`}>
+                        {isSelected ? (
+                          <span className="-rotate-45 material-symbols-outlined text-[#291800] text-sm font-bold">check</span>
+                        ) : (
+                          <div className="w-1.5 h-1.5 rounded-full bg-[#857462]" />
+                        )}
+                      </div>
                     </div>
-                    <h4 className="font-bold text-sm text-white mb-1">{t.title}</h4>
-                    <p className="text-[11px] text-slate-400 leading-snug">{t.desc}</p>
                   </div>
                 );
               })}
             </div>
           </div>
 
-          {/* Submit CTA */}
-          <div className="pt-2">
-            <button
-              type="submit"
-              className="w-full py-3.5 rounded-xl bg-gradient-to-r from-indigo-600 to-indigo-700 hover:from-indigo-500 hover:to-indigo-600 text-white font-extrabold text-sm shadow-xl shadow-indigo-600/30 transition flex items-center justify-center space-x-2"
-            >
-              <span>Abrir Pizarra Digital y Resolver Problema</span>
-              <Icons.ArrowRight className="w-4 h-4" />
-            </button>
-          </div>
+          {/* Solar Azafrán CTA Button */}
+          <button
+            type="submit"
+            disabled={isSubmitting}
+            className="w-full min-h-[50px] bg-[#f5a623] text-[#201b0d] font-mono text-sm uppercase tracking-wider font-bold rounded-xl shadow-[4px_4px_0px_#201b0d] border-2 border-[#201b0d] flex items-center justify-center gap-2 hover:brightness-105 active:translate-x-0.5 active:translate-y-0.5 active:shadow-[1px_1px_0px_#201b0d] transition-all cursor-pointer mt-1"
+          >
+            {isSubmitting ? (
+              <>
+                <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                <span>Tejiendo tu camino...</span>
+              </>
+            ) : (
+              <>
+                <span>Comenzar mi camino</span>
+                <span className="material-symbols-outlined text-lg">arrow_forward</span>
+              </>
+            )}
+          </button>
         </form>
-      </div>
+      </section>
+
+      {/* Sello Oficial de la Educación Guatemalteca */}
+      <footer className="flex flex-col items-center gap-1 text-[#524534] text-xs text-center pb-2">
+        <button
+          type="button"
+          onClick={() => alert('Ingreso mediante código escolar del CNB / MINEDUC')}
+          className="text-[#625499] hover:text-[#b90c55] underline decoration-dotted font-medium"
+        >
+          ¿Tienes código de tu colegio? Ingresa aquí
+        </button>
+        <div className="flex items-center gap-1.5 opacity-80 mt-1">
+          <span className="material-symbols-outlined text-sm text-[#0D9488]">verified</span>
+          <span className="font-mono text-[10px] uppercase tracking-wider">
+            MINEDUC • Ciclo Básico Guatemala
+          </span>
+        </div>
+      </footer>
     </div>
   );
 };

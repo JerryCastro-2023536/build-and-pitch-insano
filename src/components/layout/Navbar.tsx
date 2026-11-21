@@ -1,106 +1,119 @@
 import React from 'react';
-import { Icons } from '../common/Icons';
+import { ScreenId } from '../../domain/flowStateMachine';
+import { BalamJaguarAvatar } from '../common/BalamJaguarAvatar';
 
 export interface NavbarProps {
-  currentScreenId: number;
-  onSelectScreen: (screenId: number) => void;
+  currentScreenId: ScreenId;
+  onSelectScreen: (screenId: ScreenId) => void;
   studentName?: string;
   onResetDemo: () => void;
   onLoadPitchScenario: () => void;
 }
 
-export const SCREENS_META = [
-  { id: 1, title: '1. Registro', stitchId: 'd6f04a15bb124422afdf59ea03e68f8b', tag: 'Registro Inicial' },
-  { id: 2, title: '2. Pizarra', stitchId: 'cf0147a592034e049c2ff56aaff8873c', tag: 'Pizarra de Trabajo' },
-  { id: 3, title: '3. Diagnóstico', stitchId: '597cc88da3ca4d0d98adfcb5a9e6c28a', tag: 'Dónde se Rompió' },
-  { id: 4, title: '4. Mi Ruta', stitchId: '3c22f79a510841adac38188a693ae796', tag: 'Ruta Personalizada' },
-  { id: 5, title: '5. Refuerzo', stitchId: 'ce1717e9a0524e4882cf78627698614c', tag: 'Feedback Visual' },
-  { id: 6, title: '6. Mi Progreso', stitchId: '5dab68cc9b274d0faae85e00de28dda7', tag: 'Camila Morales' },
-  { id: 7, title: '7. Docente y Familia', stitchId: '062134e26e594017af0b3fc58ea67cfa', tag: 'Vista Acompañante' },
-  { id: 8, title: '8. Base Reparada', stitchId: '65ae8aa19d17468396ed9d4445a477f7', tag: 'Éxito de Aprendizaje' }
+export const SCREENS_META: { id: ScreenId; title: string; subtitle: string; icon: string }[] = [
+  { id: 1, title: '1. Registro', subtitle: 'Bienvenida', icon: 'person_add' },
+  { id: 2, title: '2. Mi Camino', subtitle: 'Hub interactivo', icon: 'explore' },
+  { id: 3, title: '3. Pizarra', subtitle: 'Resolución', icon: 'draw' },
+  { id: 4, title: '4. Feedback', subtitle: 'Cámara lenta', icon: 'troubleshoot' },
+  { id: 5, title: '5. Ruta Nudos', subtitle: '5 Nudos', icon: 'route' },
+  { id: 6, title: '6. Apoyo', subtitle: 'Guía PEMDAS', icon: 'menu_book' },
+  { id: 7, title: '7. Mi Progreso', subtitle: 'Métricas y Telar', icon: 'analytics' },
+  { id: 8, title: '8. Docente/Tutor', subtitle: 'Acompañamiento', icon: 'supervisor_account' },
+  { id: 9, title: '9. Base Reparada', subtitle: 'Cierre de Pitch', icon: 'celebration' }
 ];
 
 export const Navbar: React.FC<NavbarProps> = ({
   currentScreenId,
   onSelectScreen,
-  studentName,
+  studentName = 'Camila Morales',
   onResetDemo,
   onLoadPitchScenario
 }) => {
   return (
-    <header className="bg-slate-900/90 backdrop-blur-md border-b border-slate-800 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-16">
-          {/* Brand */}
-          <div className="flex items-center space-x-3 cursor-pointer" onClick={() => onSelectScreen(1)}>
-            <Icons.BalamLogo className="w-9 h-9" />
-            <div>
-              <div className="flex items-center space-x-2">
-                <span className="font-extrabold text-xl tracking-tight text-white">BALAM</span>
-                <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-indigo-500/20 text-indigo-300 border border-indigo-500/30">
-                  EdTech Guatemala
+    <header className="bg-[#fff8f0]/95 backdrop-blur-md border-b-2 border-[#201b0d]/10 sticky top-0 z-40 shadow-sm">
+      <div className="max-w-7xl mx-auto px-3 sm:px-6">
+        {/* Top Header Row */}
+        <div className="flex items-center justify-between h-14 sm:h-16">
+          {/* Brand Logo & Title */}
+          <div 
+            className="flex items-center gap-2.5 cursor-pointer group" 
+            onClick={() => onSelectScreen(2)}
+            title="Ir a Mi Camino"
+          >
+            <BalamJaguarAvatar size={38} animated />
+            <div className="flex flex-col leading-none">
+              <div className="flex items-center gap-1.5">
+                <span className="font-headline font-bold text-xl sm:text-2xl text-[#201b0d] tracking-tight">
+                  Balam
+                </span>
+                <span className="font-mono text-[9px] uppercase font-bold tracking-wider px-1.5 py-0.5 rounded bg-[#f5a623] text-[#291800] shadow-[1px_1px_0px_#201b0d]">
+                  PISA 2025
                 </span>
               </div>
-              <p className="text-[11px] text-slate-400 font-medium">Diagnóstico Pedagógico del Proceso</p>
+              <span className="font-mono text-[10px] text-[#b90c55] font-bold uppercase tracking-wider mt-0.5">
+                Plataforma de Remediación Matemática
+              </span>
             </div>
           </div>
 
-          {/* Quick Demo Controls */}
-          <div className="hidden md:flex items-center space-x-2">
-            <button
-              onClick={onLoadPitchScenario}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-xs font-semibold transition"
-              title="Cargar escenario listo para pitch de 4 minutos"
-            >
-              <Icons.Sparkles className="w-4 h-4 text-emerald-400 animate-pulse" />
-              <span>Cargar Pitch (Camila)</span>
-            </button>
+          {/* User Metrics & Quick Actions */}
+          <div className="flex items-center gap-2 sm:gap-3">
+            {/* Racha de 5 días */}
+            <div className="flex items-center gap-1 bg-[#fef3db] border border-[#d7c3ae] px-2.5 py-1 rounded-full shadow-[2px_2px_0px_#201b0d]" title="Racha de 5 días de práctica">
+              <span className="material-symbols-outlined text-[#835500] text-[18px]">local_fire_department</span>
+              <span className="font-mono text-[12px] font-bold text-[#201b0d]">5d</span>
+            </div>
 
-            <button
-              onClick={onResetDemo}
-              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 border border-slate-700 text-xs font-medium transition"
-              title="Limpiar datos y reiniciar demo"
-            >
-              <Icons.RotateCcw className="w-3.5 h-3.5 text-slate-400" />
-              <span>Reset Demo</span>
-            </button>
+            {/* Puntos de Urdimbre */}
+            <div className="hidden xs:flex items-center gap-1 bg-[#f5a623] text-[#291800] border border-[#201b0d] px-2.5 py-1 rounded-full shadow-[2px_2px_0px_#201b0d]" title="Puntos del telar">
+              <span className="material-symbols-outlined text-[16px]">stars</span>
+              <span className="font-mono text-[12px] font-bold">320</span>
+            </div>
 
+            {/* Active Student Pill */}
             {studentName && (
-              <div className="flex items-center space-x-2 pl-2 border-l border-slate-700">
-                <div className="w-7 h-7 rounded-full bg-indigo-600/30 border border-indigo-500/50 flex items-center justify-center text-xs font-bold text-indigo-300">
+              <div 
+                className="flex items-center gap-2 bg-[#f8edd5] border border-[#201b0d]/20 px-2.5 py-1 rounded-full cursor-pointer hover:bg-[#f2e7d0] transition-colors"
+                onClick={() => onSelectScreen(7)}
+                title="Ver perfil y progreso"
+              >
+                <div className="w-6 h-6 rounded-full bg-[#1e1548] text-white flex items-center justify-center font-bold text-[11px]">
                   {studentName.charAt(0)}
                 </div>
-                <div className="text-left">
-                  <p className="text-xs font-semibold text-slate-200 leading-none">{studentName}</p>
-                  <p className="text-[10px] text-emerald-400 font-medium leading-tight">14 años · 3ero Básico</p>
-                </div>
+                <span className="font-sans text-xs font-bold text-[#201b0d] hidden sm:inline">
+                  {studentName}
+                </span>
               </div>
             )}
           </div>
         </div>
 
-        {/* 8 Stitch Screens Tabs Bar */}
-        <div className="flex items-center space-x-1 overflow-x-auto py-2 no-scrollbar border-t border-slate-800/60 text-xs">
+        {/* 9 Screens Navigation Slider Tabs */}
+        <nav 
+          aria-label="Pantallas de la plataforma"
+          className="flex items-center gap-1.5 overflow-x-auto py-2 no-scrollbar border-t border-[#201b0d]/10 text-xs"
+        >
           {SCREENS_META.map((screen) => {
             const isActive = currentScreenId === screen.id;
             return (
               <button
                 key={screen.id}
                 onClick={() => onSelectScreen(screen.id)}
-                className={`whitespace-nowrap px-3 py-1.5 rounded-md font-medium transition flex items-center space-x-1.5 ${
+                className={`whitespace-nowrap px-3 py-1.5 rounded-lg font-mono text-[11px] font-bold transition-all flex items-center gap-1.5 shrink-0 ${
                   isActive
-                    ? 'bg-indigo-600 text-white shadow-md shadow-indigo-600/30'
-                    : 'text-slate-400 hover:text-slate-200 hover:bg-slate-800/60'
+                    ? 'bg-[#1e1548] text-white shadow-[2px_2px_0px_#f5a623] border border-[#1e1548]'
+                    : 'bg-[#fff8f0] text-[#524534] hover:text-[#201b0d] hover:bg-[#f8edd5] border border-transparent'
                 }`}
               >
+                <span className="material-symbols-outlined text-[15px]">{screen.icon}</span>
                 <span>{screen.title}</span>
                 {isActive && (
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" />
+                  <span className="w-1.5 h-1.5 rounded-full bg-[#f5a623] animate-pulse" />
                 )}
               </button>
             );
           })}
-        </div>
+        </nav>
       </div>
     </header>
   );

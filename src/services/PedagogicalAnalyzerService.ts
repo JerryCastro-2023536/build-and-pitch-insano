@@ -2,10 +2,7 @@ import {
   DiagnosticResult, 
   MathStep, 
   StudentProfile, 
-  TopicType, 
-  WeakFoundationType, 
-  RemediationExercise, 
-  AdultSummary 
+  TopicType 
 } from '../domain/types';
 import { evaluateOffline } from './offlineEvaluator';
 import { evaluateWithGemini } from './geminiEvaluator';
@@ -30,9 +27,11 @@ export class PedagogicalAnalyzerService implements IPedagogicalAnalyzerService {
   }
 
   async analyzeStudentWork(input: PedagogicalAnalysisInput): Promise<DiagnosticResult> {
-    const apiKey = typeof import.meta !== 'undefined' ? (import.meta as any).env?.VITE_GEMINI_API_KEY : null;
+    const apiKey = typeof import.meta !== 'undefined' && import.meta.env
+      ? (import.meta.env.VITE_GEMINI_API_KEY as string | undefined)
+      : undefined;
 
-    // Deterministic mock offline mode is prioritized or used as resilient fallback
+    // Resilient fallback: Try Gemini if key exists and enabled
     if (this.useGeminiIfAvailable && apiKey) {
       try {
         console.log('[PedagogicalAnalyzerService] Attempting Gemini API analysis...');
@@ -41,12 +40,11 @@ export class PedagogicalAnalyzerService implements IPedagogicalAnalyzerService {
           return geminiResult;
         }
       } catch (err) {
-        console.warn('[PedagogicalAnalyzerService] Gemini API evaluation failed or timed out. Falling back to offline pedagogical engine:', err);
+        console.warn('[PedagogicalAnalyzerService] Gemini API evaluation failed. Falling back to offline pedagogical engine:', err);
       }
     }
 
     // Deterministic engine guaranteed to respond in < 15ms with 100% pedagogical precision
-    console.log('[PedagogicalAnalyzerService] Running deterministic offline pedagogical engine...');
     return evaluateOffline(input);
   }
 }

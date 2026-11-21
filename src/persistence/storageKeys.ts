@@ -1,11 +1,15 @@
 /**
- * Storage keys for Balam persistence
+ * Storage keys and versioning for Balam persistence
  */
+export const BALAM_SCHEMA_VERSION = 2;
+
 export const STORAGE_KEYS = {
-  STUDENT_PROFILE: 'balam_student_profile_v1',
-  CURRENT_SESSION: 'balam_current_session_v1',
-  DIAGNOSTIC_RESULT: 'balam_diagnostic_result_v1',
-  REMEDIATION_STATE: 'balam_remediation_state_v1',
-  ADULT_SUMMARY: 'balam_adult_summary_v1',
-  DEMO_MODE: 'balam_demo_mode_v1'
+  SCHEMA_VERSION: 'balam_schema_version',
+  STUDENT_PROFILE: 'balam_v2_student_profile',
+  CURRENT_SESSION: 'balam_v2_current_session',
+  DIAGNOSTIC_RESULT: 'balam_v2_diagnostic_result',
+  REMEDIATION_STATE: 'balam_v2_remediation_state',
+  ADULT_SUMMARY: 'balam_v2_adult_summary',
+  ACTIVE_SCREEN: 'balam_v2_active_screen',
+  DEMO_MODE: 'balam_v2_demo_mode'
 } as const;

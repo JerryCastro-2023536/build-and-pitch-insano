@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Icons } from '../common/Icons';
+import { ScreenId } from '../../domain/flowStateMachine';
 
 export interface DemoControlBarProps {
-  currentStep: number;
-  onGoToStep: (step: number) => void;
+  currentStep: ScreenId;
+  onGoToStep: (step: ScreenId) => void;
   onResetDemo: () => void;
   onLoadPitchScenario: () => void;
 }
@@ -14,12 +14,12 @@ export const DemoControlBar: React.FC<DemoControlBarProps> = ({
   onResetDemo,
   onLoadPitchScenario
 }) => {
-  // 4-minute pitch stopwatch
+  // 4-minute pitch countdown stopwatch
   const [secondsRemaining, setSecondsRemaining] = useState<number>(240); // 4 minutes
   const [isTimerRunning, setIsTimerRunning] = useState<boolean>(false);
 
   useEffect(() => {
-    let interval: any = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
     if (isTimerRunning && secondsRemaining > 0) {
       interval = setInterval(() => {
         setSecondsRemaining((prev) => prev - 1);
@@ -27,7 +27,9 @@ export const DemoControlBar: React.FC<DemoControlBarProps> = ({
     } else if (secondsRemaining === 0) {
       setIsTimerRunning(false);
     }
-    return () => clearInterval(interval);
+    return () => {
+      if (interval) clearInterval(interval);
+    };
   }, [isTimerRunning, secondsRemaining]);
 
   const formatTimer = (secs: number) => {
@@ -36,31 +38,35 @@ export const DemoControlBar: React.FC<DemoControlBarProps> = ({
     return `${mins}:${remainder < 10 ? '0' : ''}${remainder}`;
   };
 
-  const STEPS = [
-    { num: 1, screenId: 1, label: '1. Registro Inicial' },
-    { num: 2, screenId: 2, label: '2. Whiteboard' },
-    { num: 3, screenId: 3, label: '3. Detección Base Débil' },
-    { num: 4, screenId: 4, label: '4. Remediación & Reintento' },
-    { num: 5, screenId: 7, label: '5. Resumen Docente/Familia' }
+  // 5 Canonical Pitch Steps
+  const PITCH_STEPS: { num: number; screenId: ScreenId; label: string }[] = [
+    { num: 1, screenId: 1, label: '1. Registro' },
+    { num: 2, screenId: 3, label: '2. Pizarra' },
+    { num: 3, screenId: 4, label: '3. Diagnóstico (Paso 3)' },
+    { num: 4, screenId: 5, label: '4. Remediación (PEMDAS)' },
+    { num: 5, screenId: 9, label: '5. Base Reparada (94%)' }
   ];
 
   return (
-    <div className="bg-slate-950/90 border-b border-indigo-950/80 px-4 py-2 flex flex-wrap items-center justify-between gap-3 text-xs">
+    <aside 
+      aria-label="Barra de control de pitch para jueces"
+      className="bg-[#1e1548] text-white border-b border-[#201b0d] px-3 sm:px-6 py-1.5 flex flex-wrap items-center justify-between gap-2 text-xs font-sans shadow-md"
+    >
       {/* 5-step pitch indicator */}
-      <div className="flex items-center space-x-1 sm:space-x-2">
-        <span className="font-bold text-slate-400 hidden lg:inline mr-1">
+      <div className="flex items-center gap-1.5 flex-wrap">
+        <span className="font-mono text-[11px] font-bold text-[#f5a623] hidden md:inline mr-1">
           Flujo Demo Pitch (&lt;4 min):
         </span>
-        {STEPS.map((s) => {
+        {PITCH_STEPS.map((s) => {
           const isActive = currentStep === s.screenId;
           return (
             <button
               key={s.num}
               onClick={() => onGoToStep(s.screenId)}
-              className={`px-2.5 py-1 rounded text-[11px] font-semibold transition flex items-center space-x-1 ${
+              className={`px-2.5 py-1 rounded font-mono text-[10px] font-bold transition-all flex items-center gap-1 shadow-xs ${
                 isActive
-                  ? 'bg-emerald-500 text-slate-950 font-bold shadow-sm shadow-emerald-500/40 ring-1 ring-emerald-400'
-                  : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                  ? 'bg-[#f5a623] text-[#291800] shadow-[2px_2px_0px_#ffffff]'
+                  : 'bg-[#2a1b5e] text-[#ece2ca] hover:text-white border border-[#3a2a7a]'
               }`}
             >
               <span>{s.label}</span>
@@ -70,14 +76,16 @@ export const DemoControlBar: React.FC<DemoControlBarProps> = ({
       </div>
 
       {/* Timer & Fast Scenario Controls */}
-      <div className="flex items-center space-x-3 ml-auto">
+      <div className="flex items-center gap-2 sm:gap-3 ml-auto">
         {/* Stopwatch */}
-        <div className="flex items-center space-x-1.5 px-2.5 py-1 rounded bg-slate-900 border border-slate-800 text-slate-300">
-          <Icons.Clock className={`w-3.5 h-3.5 ${secondsRemaining < 60 ? 'text-rose-400 animate-pulse' : 'text-indigo-400'}`} />
-          <span className="font-mono font-bold">{formatTimer(secondsRemaining)}</span>
+        <div className="flex items-center gap-1.5 px-2.5 py-1 rounded bg-[#2a1b5e] border border-[#3a2a7a] text-white font-mono text-xs">
+          <span className={`material-symbols-outlined text-[16px] ${secondsRemaining < 60 ? 'text-[#ff98b0] animate-pulse' : 'text-[#f5a623]'}`}>
+            schedule
+          </span>
+          <span className="font-bold">{formatTimer(secondsRemaining)}</span>
           <button
             onClick={() => setIsTimerRunning(!isTimerRunning)}
-            className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold ml-1 uppercase"
+            className="text-[10px] text-[#f5a623] hover:underline font-bold ml-1 uppercase"
           >
             {isTimerRunning ? 'Pausar' : 'Iniciar'}
           </button>
@@ -86,7 +94,7 @@ export const DemoControlBar: React.FC<DemoControlBarProps> = ({
               setSecondsRemaining(240);
               setIsTimerRunning(false);
             }}
-            className="text-[10px] text-slate-500 hover:text-slate-300 ml-0.5"
+            className="text-[10px] text-[#ece2ca]/70 hover:text-white ml-0.5"
             title="Reiniciar a 4 minutos"
           >
             ↻
@@ -96,20 +104,22 @@ export const DemoControlBar: React.FC<DemoControlBarProps> = ({
         {/* 1-Click Pitch Scenario Button */}
         <button
           onClick={onLoadPitchScenario}
-          className="bg-indigo-600 hover:bg-indigo-500 text-white font-bold px-3 py-1 rounded shadow-sm shadow-indigo-600/30 transition flex items-center space-x-1.5 text-xs"
+          className="bg-[#0D9488] hover:bg-[#0b7c72] text-white font-mono font-bold px-3 py-1 rounded shadow-[2px_2px_0px_#201b0d] transition-all flex items-center gap-1.5 text-xs active:translate-x-0.5 active:translate-y-0.5"
+          title="Cargar escenario oficial de Camila Morales (14 años, 3ero Básico)"
         >
-          <Icons.Sparkles className="w-3.5 h-3.5" />
+          <span className="material-symbols-outlined text-[15px]">bolt</span>
           <span>Pitch 1-Click</span>
         </button>
 
+        {/* Reset Demo Button */}
         <button
           onClick={onResetDemo}
-          className="text-slate-400 hover:text-rose-400 text-xs transition"
-          title="Resetear demo"
+          className="text-[#ece2ca] hover:text-[#ff98b0] text-xs font-mono font-bold transition-colors"
+          title="Resetear demo a estado inicial limpio"
         >
           Reset
         </button>
       </div>
-    </div>
+    </aside>
   );
 };

@@ -2,9 +2,41 @@ import {
   DiagnosticResult, 
   RemediationExercise, 
   AdultSummary, 
-  WeakFoundationType 
+  WeakFoundationType,
+  MathStep
 } from '../domain/types';
 import { PedagogicalAnalysisInput } from './PedagogicalAnalyzerService';
+
+/**
+ * Expression normalizer to handle diverse handwriting and LaTeX formats
+ */
+function normalizeExpr(raw: string): string {
+  if (!raw) return '';
+  return raw
+    .toLowerCase()
+    .replace(/\s+/g, '')
+    .replace(/\\times/g, '*')
+    .replace(/\\cdot/g, '*')
+    .replace(/·/g, '*')
+    .replace(/×/g, '*')
+    .replace(/²/g, '^2')
+    .replace(/\\pm/g, '±')
+    .replace(/\\left\(/g, '(')
+    .replace(/\\right\)/g, ')');
+}
+
+/**
+ * Checks for basic syntax sanity (e.g. balanced parentheses)
+ */
+function hasBalancedParentheses(expr: string): boolean {
+  let count = 0;
+  for (const char of expr) {
+    if (char === '(') count++;
+    if (char === ')') count--;
+    if (count < 0) return false;
+  }
+  return count === 0;
+}
 
 /**
  * Deterministic Pedagogical Rule Engine for Guatemala EdTech MVP
@@ -14,7 +46,9 @@ export function evaluateOffline(input: PedagogicalAnalysisInput): DiagnosticResu
   const { topic, steps, studentProfile } = input;
   const studentName = studentProfile?.name || 'Estudiante';
 
-  // 1. Check if student marked any step as incorrect or if any step has typical error patterns
+  // Filter out any empty trailing steps
+  const validSteps = steps.filter(s => s && s.expression && s.expression.trim().length > 0);
+
   let errorIndex: number | null = null;
   let detectedWeakness: WeakFoundationType = null;
   let calloutTitle = '';
@@ -22,12 +56,40 @@ export function evaluateOffline(input: PedagogicalAnalysisInput): DiagnosticResu
   let ruleBroken = '';
   let goldenRule = '';
 
-  for (let i = 0; i < steps.length; i++) {
-    const s = steps[i];
-    const expr = s.expression.toLowerCase().replace(/\s+/g, '');
+  for (let i = 0; i < validSteps.length; i++) {
+    const s = validSteps[i];
+    const expr = normalizeExpr(s.expression);
 
-    // Case A: Quadratic equation: 2(x + 3)^2 -> (2x + 6)^2
-    if (expr.includes('(2x+6)^2') || expr.includes('(2x+6)2') || s.isIncorrectStep) {
+    // Guard: Unbalanced parentheses
+    if (!hasBalancedParentheses(expr)) {
+      errorIndex = i;
+      detectedWeakness = 'jerarquia_operaciones';
+      calloutTitle = `Paréntesis incompletos (Paso ${i + 1})`;
+      calloutDesc = 'El paso tiene paréntesis sin cerrar, lo que altera el orden de evaluación matemática.';
+      ruleBroken = 'Sintaxis y Agrupación: Todo paréntesis abierto debe cerrarse antes de operar.';
+      goldenRule = 'Verifica que cada "(" tenga su correspondiente ")" antes de resolver.';
+      break;
+    }
+
+    // Explicit error flag from curriculum dataset
+    if (s.isIncorrectStep) {
+      errorIndex = i;
+      detectedWeakness = topic === 'potencias' ? 'potencias' : 'jerarquia_operaciones';
+      calloutTitle = `¡Aquí se rompió el razonamiento! (Paso ${i + 1})`;
+      calloutDesc = s.errorReason || 'Se detectó una alteración en la prioridad operacional.';
+      ruleBroken = 'Jerarquía Operacional (P.E.M.D.A.S.): Potencias antes de Multiplicación';
+      goldenRule = 'Para despejar k(x+a)², primero divide ambos lados entre k: (x+a)² = N/k. ¡Nunca multipliques la base!';
+      break;
+    }
+
+    // Pattern 1: Camila's breakdown: 2(x + 3)^2 -> (2x + 6)^2
+    // Distributing a multiplier inside a parenthesized exponent
+    if (
+      expr.includes('(2x+6)^2') || 
+      expr.includes('(2x+6)^') || 
+      expr.includes('(2x+6)2') ||
+      /(\d+)x\+(\d+)\)\^2/.test(expr) && i > 0 && normalizeExpr(validSteps[i-1].expression).includes('2(x+3)^2')
+    ) {
       errorIndex = i;
       detectedWeakness = 'jerarquia_operaciones';
       calloutTitle = `¡Aquí se rompió el razonamiento! (Paso ${i + 1})`;
@@ -37,19 +99,27 @@ export function evaluateOffline(input: PedagogicalAnalysisInput): DiagnosticResu
       break;
     }
 
-    // Case B: Sign error with powers: -3^2 evaluated as +9
-    if (expr.startsWith('9+') && topic === 'potencias') {
+    // Pattern 2: Sign error with powers: -3^2 evaluated as +9
+    if (
+      (expr.startsWith('9+') || expr.includes('=9+') || expr.startsWith('9-') || expr.includes('9+(-8)')) && 
+      (topic === 'potencias' || expr.includes('-3^2') || (i > 0 && normalizeExpr(validSteps[i - 1].expression).includes('-3^2')))
+    ) {
       errorIndex = i;
       detectedWeakness = 'potencias';
       calloutTitle = `¡Error de Base Detectado! (Paso ${i + 1})`;
-      calloutDesc = 'Calculaste -3² como +9. Sin paréntesis, el signo negativo no está afectado por el exponente.';
+      calloutDesc = 'Calculaste -3² como +9. Sin paréntesis que abrace al signo, el negativo no está afectado por el exponente.';
       ruleBroken = 'Convenio de Signos en Potencias: -aⁿ = -(aⁿ) ≠ (-a)ⁿ';
       goldenRule = 'Solo si está escrito (-3)² el resultado es +9. Si está escrito -3², el resultado es -9.';
       break;
     }
 
-    // Case C: Order of operations direct: 18 - 3 * ... evaluated as 15 * ...
-    if (expr.startsWith('15*') || expr.startsWith('15\\times')) {
+    // Pattern 3: Premature addition/subtraction violating PEMDAS: 18 - 3 * ... evaluated as 15 * ...
+    if (
+      expr.startsWith('15*') || 
+      expr.startsWith('15(') || 
+      expr.startsWith('15x') || 
+      expr.includes('=15*')
+    ) {
       errorIndex = i;
       detectedWeakness = 'jerarquia_operaciones';
       calloutTitle = `¡Fallo de Prioridad Operativa! (Paso ${i + 1})`;
@@ -60,7 +130,7 @@ export function evaluateOffline(input: PedagogicalAnalysisInput): DiagnosticResu
     }
   }
 
-  // If no explicit error detected in loop, check if last step matches correct target or fallback
+  // If no error found, evaluate if sequence reaches the correct solution
   const isCorrect = errorIndex === null;
 
   if (isCorrect) {
@@ -70,16 +140,17 @@ export function evaluateOffline(input: PedagogicalAnalysisInput): DiagnosticResu
       weakFoundation: null,
       visualFeedback: {
         highlightStepIndex: null,
-        calloutTitle: '¡Razonamiento Perfecto!',
-        calloutDescription: 'Has resuelto todos los pasos respetando la jerarquía matemática y las propiedades operacionales.',
+        calloutTitle: '¡Razonamiento Impecable!',
+        calloutDescription: 'Has resuelto todos los pasos respetando la jerarquía matemática y las propiedades de igualdad.',
         ruleBroken: 'Ninguna: Procedimiento Riguroso',
+        coordinates: undefined,
         foundationGuide: {
           title: 'Maestría Demostrada',
           conceptName: 'Álgebra y Operaciones',
           explanation: 'Tus transformaciones respetan las propiedades de igualdad y la jerarquía de las operaciones.',
           visualGraphic: 'quadratic_structure',
-          exampleIncorrect: 'N/A',
-          exampleCorrect: 'Pasos ejecutados con precisión',
+          exampleIncorrect: '2(x+3)² → (2x+6)²',
+          exampleCorrect: '2(x+3)² = 32 → (x+3)² = 16 → x+3 = ±4',
           goldenRule: '¡Sigue manteniendo este orden en tu práctica diaria!'
         }
       },
@@ -88,9 +159,8 @@ export function evaluateOffline(input: PedagogicalAnalysisInput): DiagnosticResu
     };
   }
 
-  // If error occurred, generate tailored remediation exercises focused ONLY on that weak foundation
+  // Generate remediation exercises focused strictly on the isolated weakness
   const remediation = getExercisesForFoundation(detectedWeakness || 'jerarquia_operaciones');
-
   const adultSummary = generateAdultSummary(studentName, detectedWeakness || 'jerarquia_operaciones', false);
 
   return {
@@ -122,7 +192,7 @@ export function evaluateOffline(input: PedagogicalAnalysisInput): DiagnosticResu
   };
 }
 
-function getExercisesForFoundation(foundation: 'jerarquia_operaciones' | 'potencias' | 'ecuacion_cuadratica'): RemediationExercise[] {
+export function getExercisesForFoundation(foundation: 'jerarquia_operaciones' | 'potencias' | 'ecuacion_cuadratica'): RemediationExercise[] {
   if (foundation === 'jerarquia_operaciones') {
     return [
       {
@@ -231,7 +301,7 @@ function getExercisesForFoundation(foundation: 'jerarquia_operaciones' | 'potenc
   ];
 }
 
-function generateAdultSummary(studentName: string, weakness: WeakFoundationType, isSuccess: boolean): AdultSummary {
+export function generateAdultSummary(studentName: string, weakness: WeakFoundationType, isSuccess: boolean): AdultSummary {
   if (isSuccess) {
     return {
       studentName,
@@ -290,8 +360,10 @@ function generateAdultSummary(studentName: string, weakness: WeakFoundationType,
     age: 14,
     grade: '3ero Básico',
     lastUpdated: 'Hoy en clase',
-    detectedWeaknessTitle: 'Base Débil: Jerarquía de Operaciones',
-    detectedWeaknessDescription: `${studentName} falló en un problema de ecuaciones cuadráticas porque aplicó una multiplicación antes de una potencia.`,
+    detectedWeaknessTitle: weakness === 'potencias' 
+      ? 'Base Débil: Potencias y Signos' 
+      : 'Base Débil: Jerarquía de Operaciones',
+    detectedWeaknessDescription: `${studentName} falló en un problema de matemáticas debido a que aplicó una operación previa a resolver o aislar la potencia.`,
     rootCausePedagogy: 'No es un problema de álgebra compleja; es un vacío conceptual de 1ro básico acumulado que bloquea el avance actual.',
     currentPracticeFocus: 'Aislamiento de coeficientes y orden PEMDAS',
     evolutionStatus: 'En Remediación Focalizada',
@@ -324,7 +396,7 @@ function generateAdultSummary(studentName: string, weakness: WeakFoundationType,
         id: 'tl-1',
         date: 'Hoy',
         title: 'Error de proceso detectado',
-        description: 'Se rompió el razonamiento en el Paso 3 al distribuir un factor dentro de una potencia.',
+        description: 'Se rompió el razonamiento al operar antes de aislar la potencia.',
         type: 'diagnostic_error',
         badge: 'Vacío Detectado'
       }

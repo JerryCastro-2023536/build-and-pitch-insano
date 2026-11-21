@@ -35,7 +35,7 @@ export interface MathStep {
 export interface CanvasStroke {
   color: string;
   size: number;
-  tool: 'pen' | 'eraser';
+  tool: 'pen' | 'eraser' | 'highlighter';
   points: { x: number; y: number }[];
 }
 
