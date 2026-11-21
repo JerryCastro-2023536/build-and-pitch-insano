@@ -19,7 +19,16 @@ function normalizeExpr(raw: string): string {
     .replace(/\\cdot/g, '*')
     .replace(/·/g, '*')
     .replace(/×/g, '*')
+    .replace(/\\div/g, '/')
+    .replace(/÷/g, '/')
     .replace(/²/g, '^2')
+    .replace(/³/g, '^3')
+    .replace(/x₁/g, 'x_1')
+    .replace(/x₂/g, 'x_2')
+    .replace(/\\sqrt\{([^}]+)\}/g, 'sqrt($1)')
+    .replace(/√(\d+)/g, 'sqrt($1)')
+    .replace(/√\(([^)]+)\)/g, 'sqrt($1)')
+    .replace(/√/g, 'sqrt')
     .replace(/\\pm/g, '±')
     .replace(/\\left\(/g, '(')
     .replace(/\\right\)/g, ')');
@@ -201,7 +210,7 @@ export function getExercisesForFoundation(foundation: 'jerarquia_operaciones' | 
         difficulty: 'basico',
         title: 'Prioridad de Potencias frente a Multiplicación',
         statement: 'En la expresión 3 · 4², ¿cuál es la primera operación matemática que debes realizar obligatoriamente?',
-        formula: '3 \\times 4^2 = ?',
+        formula: '3 × 4² = ?',
         stepOptions: [
           {
             label: 'A) Multiplicar primero 3 × 4 = 12 y luego elevar al cuadrado: 12² = 144',
@@ -228,7 +237,7 @@ export function getExercisesForFoundation(foundation: 'jerarquia_operaciones' | 
         difficulty: 'intermedio',
         title: 'Despeje correcto de coeficientes en binomios cuadráticos',
         statement: 'Si tienes 2(x + 3)² = 32, ¿cuál es el paso riguroso para despejar x?',
-        formula: '2(x + 3)^2 = 32 \\implies ?',
+        formula: '2(x + 3)² = 32 → ?',
         stepOptions: [
           {
             label: 'A) Distribuir el 2 dentro del paréntesis: (2x + 6)² = 32',
@@ -255,7 +264,7 @@ export function getExercisesForFoundation(foundation: 'jerarquia_operaciones' | 
         difficulty: 'avanzado',
         title: 'Extracción de raíz con signos duales (±)',
         statement: 'Una vez obtenido (x + 3)² = 16, ¿qué valores satisface la ecuación?',
-        formula: '(x + 3)^2 = 16 \\implies x + 3 = \\pm 4',
+        formula: '(x + 3)² = 16 → x + 3 = ±4',
         stepOptions: [
           {
             label: 'A) Solo x + 3 = 4, por lo que x = 1',
@@ -282,7 +291,7 @@ export function getExercisesForFoundation(foundation: 'jerarquia_operaciones' | 
       difficulty: 'basico',
       title: 'Distinción de Paréntesis en Potencias',
       statement: '¿Cuál es el valor exacto de -4² versus (-4)²?',
-      formula: '-4^2 \\quad \\text{vs} \\quad (-4)^2',
+      formula: '-4² vs (-4)²',
       stepOptions: [
         {
           label: 'A) Ambos dan +16',

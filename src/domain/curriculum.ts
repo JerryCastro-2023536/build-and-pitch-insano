@@ -83,22 +83,22 @@ export const CURRICULUM_PROBLEMS: ProblemTemplate[] = [
     topic: 'potencias',
     title: 'Operaciones combinadas con Potencias y Signos',
     statement: 'Calcula el valor numérico exacto de la expresión:',
-    equation: '-3^2 + (-2)^3 \\times 4 - \\sqrt{25}',
+    equation: '-3² + (-2)³ × 4 - √25',
     difficulty: 'Básico (2do Básico)',
     typicalErrorSteps: [
       {
         id: 'p1',
         stepNumber: 1,
-        expression: '9 + (-2)^3 \\times 4 - 5',
-        annotation: 'Evaluar -3^2 como (-3)^2 = +9 (¡ERROR!)',
+        expression: '9 + (-2)³ × 4 - 5',
+        annotation: 'Evaluar -3² como (-3)² = +9 (¡ERROR!)',
         isIncorrectStep: true,
-        errorReason: 'Fallo en Potencias y Signos: -3^2 es -(3^2) = -9, el signo no está dentro del exponente.'
+        errorReason: 'Fallo en Potencias y Signos: -3² es -(3²) = -9, el signo no está dentro del exponente.'
       },
       {
         id: 'p2',
         stepNumber: 2,
-        expression: '9 + (-8) \\times 4 - 5',
-        annotation: 'Calcular (-2)^3 = -8'
+        expression: '9 + (-8) × 4 - 5',
+        annotation: 'Calcular (-2)³ = -8'
       },
       {
         id: 'p3',
@@ -111,8 +111,8 @@ export const CURRICULUM_PROBLEMS: ProblemTemplate[] = [
       {
         id: 'pc1',
         stepNumber: 1,
-        expression: '-(3^2) + (-8) \\times 4 - 5',
-        annotation: 'Distinguir entre -3^2 y (-3)^2'
+        expression: '-(3²) + (-8) × 4 - 5',
+        annotation: 'Distinguir entre -3² y (-3)²'
       },
       {
         id: 'pc2',
@@ -133,13 +133,13 @@ export const CURRICULUM_PROBLEMS: ProblemTemplate[] = [
     topic: 'jerarquia_operaciones',
     title: 'Jerarquía de Operaciones P.E.M.D.A.S.',
     statement: 'Simplifica la expresión aritmética paso a paso:',
-    equation: '18 - 3 \\times (4 - 1)^2 + 12 \\div 4',
+    equation: '18 - 3 × (4 - 1)² + 12 ÷ 4',
     difficulty: 'Fundacional (1ro / 2do Básico)',
     typicalErrorSteps: [
       {
         id: 'j1',
         stepNumber: 1,
-        expression: '15 \\times (4 - 1)^2 + 12 \\div 4',
+        expression: '15 × (4 - 1)² + 12 ÷ 4',
         annotation: 'Restar 18 - 3 = 15 al inicio (¡ERROR!)',
         isIncorrectStep: true,
         errorReason: 'Fallo de Jerarquía: Restó antes de resolver paréntesis y multiplicaciones.'
@@ -147,7 +147,7 @@ export const CURRICULUM_PROBLEMS: ProblemTemplate[] = [
       {
         id: 'j2',
         stepNumber: 2,
-        expression: '15 \\times 3^2 + 3',
+        expression: '15 × 3² + 3',
         annotation: 'Resolver paréntesis'
       }
     ],
@@ -155,14 +155,14 @@ export const CURRICULUM_PROBLEMS: ProblemTemplate[] = [
       {
         id: 'jc1',
         stepNumber: 1,
-        expression: '18 - 3 \\times 3^2 + 12 \\div 4',
+        expression: '18 - 3 × 3² + 12 ÷ 4',
         annotation: '1º Paréntesis: (4 - 1) = 3'
       },
       {
         id: 'jc2',
         stepNumber: 2,
-        expression: '18 - 3 \\times 9 + 3',
-        annotation: '2º Potencia: 3^2 = 9 y División 12 ÷ 4 = 3'
+        expression: '18 - 3 × 9 + 3',
+        annotation: '2º Potencia: 3² = 9 y División 12 ÷ 4 = 3'
       },
       {
         id: 'jc3',

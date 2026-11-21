@@ -20,7 +20,10 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
   isAnalyzing,
   highlightErrorIndex
 }) => {
-  const handleUpdateExpression = (index: number, expression: string) => {
+  const handleUpdateExpression = (index: number, rawExpression: string) => {
+    const expression = rawExpression
+      .replace(/\\times/g, '×')
+      .replace(/\\div/g, '÷');
     const updated = [...steps];
     updated[index] = { ...updated[index], expression };
     onStepsChange(updated);
@@ -56,7 +59,8 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
         {/* Header with Pitch Fast Buttons */}
         <div className="flex flex-wrap items-center justify-between pb-3 mb-3 border-b border-[#ece2ca] gap-2">
           <div>
-            <h3 className="font-headline font-bold text-[#201b0d] text-base flex items-center gap-1.5">
+            <h3 className="font-headline font-bold text-[#201b0d] text-base flex items-center gap-2">
+              <span className="material-symbols-outlined text-lg text-[#1e1548]">format_list_numbered</span>
               <span>Desglose Paso a Paso</span>
             </h3>
             <p className="font-sans text-xs text-[#524534]">
@@ -69,18 +73,20 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
             <button
               type="button"
               onClick={onSimulateError}
-              className="px-2.5 py-1 rounded-lg bg-[#ffd9df] hover:bg-[#ffb1c2] text-[#910040] border border-[#b90c55]/40 font-mono text-[10px] font-bold transition-all shadow-xs active:scale-95"
+              className="px-2.5 py-1.5 rounded-lg bg-[#ffd9df] hover:bg-[#ffb1c2] text-[#910040] border border-[#b90c55]/40 font-mono text-[10px] font-bold transition-all shadow-xs active:scale-95 flex items-center gap-1.5 cursor-pointer"
               title="Simular error típico en paso 3"
             >
-              Simular Error (Paso 3)
+              <span className="material-symbols-outlined text-xs">bug_report</span>
+              <span>Simular Error (Paso 3)</span>
             </button>
             <button
               type="button"
               onClick={onSimulateCorrect}
-              className="px-2.5 py-1 rounded-lg bg-[#e6f7f5] hover:bg-[#bbf0ea] text-[#0D9488] border border-[#0D9488]/40 font-mono text-[10px] font-bold transition-all shadow-xs active:scale-95"
+              className="px-2.5 py-1.5 rounded-lg bg-[#e6f7f5] hover:bg-[#bbf0ea] text-[#0D9488] border border-[#0D9488]/40 font-mono text-[10px] font-bold transition-all shadow-xs active:scale-95 flex items-center gap-1.5 cursor-pointer"
               title="Cargar procedimiento 100% correcto"
             >
-              Cargar Solución Correcta
+              <span className="material-symbols-outlined text-xs">check_circle</span>
+              <span>Cargar Solución Correcta</span>
             </button>
           </div>
         </div>
@@ -122,10 +128,10 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
                     <button
                       type="button"
                       onClick={() => handleRemoveStep(index)}
-                      className="text-[#857462] hover:text-[#ba1a1a] text-sm font-bold transition-colors p-1"
+                      className="text-[#857462] hover:text-[#ba1a1a] hover:bg-[#ffdad6]/50 rounded-md p-1 transition-colors flex items-center justify-center cursor-pointer"
                       title="Eliminar paso"
                     >
-                      ✕
+                      <span className="material-symbols-outlined text-sm">close</span>
                     </button>
                   )}
                 </div>
@@ -152,8 +158,9 @@ export const StepByStepEditor: React.FC<StepByStepEditorProps> = ({
                 </div>
 
                 {isHighlighted && step.errorReason && (
-                  <p className="mt-2 font-sans text-xs font-medium text-[#93000a] bg-white p-2 rounded-lg border border-[#ba1a1a]/30">
-                    ⚠️ {step.errorReason}
+                  <p className="mt-2 font-sans text-xs font-medium text-[#93000a] bg-white p-2 rounded-lg border border-[#ba1a1a]/30 flex items-start gap-1.5">
+                    <span className="material-symbols-outlined text-sm text-[#ba1a1a] shrink-0 mt-0.5">warning</span>
+                    <span>{step.errorReason}</span>
                   </p>
                 )}
               </div>

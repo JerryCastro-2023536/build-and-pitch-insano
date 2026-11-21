@@ -528,7 +528,10 @@ export const Screen5RemediationRoute: React.FC<Screen5RemediationRouteProps> = (
               )}
               {notesActiveTab === 'errores' && (
                 <div className="space-y-1">
-                  <p className="font-bold text-[#ba1a1a]">❌ Trampa común: 2(x+3)² → (2x+6)²</p>
+                  <p className="font-bold text-[#ba1a1a] flex items-center gap-1">
+                    <span className="material-symbols-outlined text-sm text-[#ba1a1a]">cancel</span>
+                    <span>Trampa común: 2(x+3)² → (2x+6)²</span>
+                  </p>
                   <p className="text-[#524534]">Nunca multipliques la base con exponente pendiente.</p>
                 </div>
               )}

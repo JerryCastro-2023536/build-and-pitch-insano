@@ -99,8 +99,9 @@ export const Screen4ProcessFeedback: React.FC<Screen4ProcessFeedbackProps> = ({
         <p className="font-sans text-xs sm:text-sm text-[#201b0d] leading-relaxed">
           {diagnostic.visualFeedback.calloutDescription}
         </p>
-        <div className="bg-[#ffdad6]/60 border border-[#ba1a1a]/40 p-2 rounded-xl text-xs font-mono font-bold text-[#93000a]">
-          ⚠️ {diagnostic.visualFeedback.ruleBroken}
+        <div className="bg-[#ffdad6]/60 border border-[#ba1a1a]/40 p-2 rounded-xl text-xs font-mono font-bold text-[#93000a] flex items-center gap-1.5">
+          <span className="material-symbols-outlined text-sm text-[#ba1a1a]">warning</span>
+          <span>{diagnostic.visualFeedback.ruleBroken}</span>
         </div>
       </section>
 
